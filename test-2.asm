@@ -1,4 +1,8 @@
-# Name and general description of program
+#####################################################
+#		Assignment1
+# Entry no 1: Anirudha Kulkarni (2019CS50421)
+# This program Prints the area under the curve determined by input points.
+#####################################################
 # ----------------------------------------
 # Data declarations go in this section.
 .data
@@ -10,8 +14,11 @@
     printarea: .asciiz "Area so far : "
     newline:  .asciiz "\n"
     areafinalprompt: .asciiz "Final calculated Area is : "
+    debug: .asciiz "\nDebug here\n"
+    term: .asciiz "\nProgram Terminated"
+    badterm: .asciiz "\nBad number of points!\nNumber of Points must be greater than 0...\nProgram Terminated"
     points: .word    0
-    area:   .word  0
+    area:   .double  0.0
     i:      .word   1
     two:    .double 2.0
     
@@ -39,7 +46,10 @@ main:
     # input taken and stored into memory location points
 
     li		$t1, 1		# $t1 = 1
-    lw		$t2, area		# $t2 = 0
+    l.d		$f4, area		# $t2 = 0
+    li		$t5, 1		# $t5 = 2
+    blt		$t0, $t5, badterminate	# if $t0 < $t5 then terminate
+    ble     $t0, $t5, terminate
 # ======================== initialise End ==================
 
 # ======================== first point start ==================
@@ -72,12 +82,14 @@ main:
     li		$v0, 4		# $v0 = 4
     la		$a0, printarea		# 
     syscall
-    li		$v0, 1		# $v0 = 4
-    lw		$a0, area		# 
+    li		$v0, 3		# $v0 = 4
+    l.d		$f12, area		# 
     syscall
     li		$v0, 4		# $v0 = 4
     la		$a0, newline		# 
     syscall
+
+    
 # ======================== first point End ==================
 
     inputLoop:
@@ -111,34 +123,26 @@ main:
 
         # ======================== point input End ==================
 
-
-        # (xnew-xold)*(ynew+yold)/2
-        # sub		$t7, $t5, $t3		# $t7 = $t1 - $t2
-        # add		$t8, $t4, $t6		# $t8 = $t4 + $t6
-        # mul     $t7, $t7, $t8
-        # # cvt.d.w $t9, $t7
-        
-        # add	$t9, $t9, $t2		# $t1 = $t1 + 1
-        # ld		$t8, 	two	# $t8 = 2
-        
-        # div   $t9, $t9, $t8
-        ##################################
         sub		$t7, $t5, $t3		# $t7 = $t1 - $t2
         add		$t8, $t4, $t6		# $t8 = $t4 + $t6
         mul     $t7, $t7, $t8
-        # cvt.d.w $t9, $t7
-        add   $t2, $t2, $t7
+
+        mtc1    $t7, $f6
+        cvt.d.w $f6, $f6
+        l.d     $f8, two
+        div.d   $f6, $f6, $f8
+        add.d   $f4, $f4, $f6
         
         # ======================== Print area to keep track ====================
         move 	$t3, $t5		# $t3 = $t5
         move 	$t4, $t6		# $t4 = $t6
-        sw		$t2, area		# 
+        s.d		$f4, area		# 
 
         li		$v0, 4		# $v0 = 4
         la		$a0, printarea		# 
         syscall
-        li		$v0, 1		# $v0 = 4
-        lw		$a0, area		# 
+        li		$v0, 3		# $v0 = 4
+        l.d		$f12, area		# 
         syscall
         li		$v0, 4		# $v0 = 4
         la		$a0, newline		# 
@@ -147,13 +151,30 @@ main:
         blt		$t1, $t0, inputLoop	# if $t1 <= $t0 then inputLoop
             
 
-    li		$v0, 1 		# $v0    4= 
-    lw		$a0, areafinalprompt		# 
-    syscall
-    # assume input comes as n till here.
+
 
 # -----
 # Done, terminate program.
-    li		$v0, 10		# $v0 = 10
-    syscall # all done!
+    terminate:
+        li		$v0, 4 		# $v0    4= 
+        la		$a0, areafinalprompt		# 
+        syscall
+        li		$v0, 3 		# $v0    4= 
+        l.d		$f12, area		# 
+        syscall
+        # assume input comes as n till here.
+        li		$v0, 4 		# $v0    4= 
+        la		$a0, term		# 
+        syscall
+        li		$v0, 10		# $v0 = 10
+        syscall # all done!
+    
+    badterminate:
+
+        # assume input comes as n till here.
+        li		$v0, 4 		# $v0    4= 
+        la		$a0, badterm		# 
+        syscall
+        li		$v0, 10		# $v0 = 10
+        syscall # all done!
 .end main
