@@ -121,8 +121,12 @@ main:
         syscall
         move 	$t6, $v0		# $v0 = $t3
 
-        # ======================== point input End ==================
+        # ======================== Area Calculations ==================
 
+        blt		$t6, 0, negativey2	# if $t6 < 0 then negativey2
+        blt		$t4, 0, negativey1	# if $t4 < 0 then negativey1
+        
+        # Normal code
         sub		$t7, $t5, $t3		# $t7 = $t1 - $t2
         add		$t8, $t4, $t6		# $t8 = $t4 + $t6
         mul     $t7, $t7, $t8
@@ -132,23 +136,78 @@ main:
         l.d     $f8, two
         div.d   $f6, $f6, $f8
         add.d   $f4, $f4, $f6
-        
-        # ======================== Print area to keep track ====================
-        move 	$t3, $t5		# $t3 = $t5
-        move 	$t4, $t6		# $t4 = $t6
-        s.d		$f4, area		# 
+        j		endif				# jump to endif
 
-        li		$v0, 4		# $v0 = 4
-        la		$a0, printarea		# 
-        syscall
-        li		$v0, 3		# $v0 = 4
-        l.d		$f12, area		# 
-        syscall
-        li		$v0, 4		# $v0 = 4
-        la		$a0, newline		# 
-        syscall
-        # ======================== Print area to keep track END ====================
-        blt		$t1, $t0, inputLoop	# if $t1 <= $t0 then inputLoop
+        # Negative y1 but positive y2
+        negativey1:
+        mul     $t6, $t6, -1
+        mul     $t4, $t4, -1
+        j		negativey2				# jump to negativey2
+        
+
+        negativey2: 
+            blt		$t4, 0, negativeboth	# if $t4 < 0 then negativeboth
+            # if only y2 is negative
+
+            mul     $t8, $t4, $t4       # y1 squared
+            mul     $t7, $t6, $t6       # y2 squared
+            add		$t7, $t7, $t8		# $t7 = $t7 + $t8
+            
+            sub		$t8, $t5, $t3		# $t8 = $t4 - $t6
+            mul     $t7, $t7, $t8
+
+            mtc1    $t7, $f6
+            cvt.d.w $f6, $f6
+
+            move 	$t7, $t6		# $t7 = $t6
+            add		$t7, $t7, $t4		# $t7 = $t7 + $t4
+            abs     $t7, $t7
+            mtc1    $t7, $f8
+            cvt.d.w $f8, $f8
+            div.d   $f6, $f6, $f8
+            l.d     $f8, two
+            div.d   $f6, $f6, $f8
+            add.d   $f4, $f4, $f6
+            j		endif				# jump to endif
+
+            negativeboth:
+            # if both y are negative
+            li		$t8, 0 		# $t8 =0    
+            
+            sub		$t7, $t5, $t3		# $t7 = $t1 - $t2
+            sub		$t8, $t8, $t4 	# $t8 = $t4 + $t6
+            sub		$t8, $t8, $t6 	# $t8 = $t4 + $t6
+            
+            mul     $t7, $t7, $t8
+            
+            
+            mtc1    $t7, $f6
+            cvt.d.w $f6, $f6
+            l.d     $f8, two
+            div.d   $f6, $f6, $f8
+            add.d   $f4, $f4, $f6
+            
+
+
+        # ======================== Print area to keep track ====================
+        endif:
+
+            
+            move 	$t3, $t5		# $t3 = $t5
+            move 	$t4, $t6		# $t4 = $t6
+            s.d		$f4, area		# 
+
+            li		$v0, 4		# $v0 = 4
+            la		$a0, printarea		# 
+            syscall
+            li		$v0, 3		# $v0 = 4
+            l.d		$f12, area		# 
+            syscall
+            li		$v0, 4		# $v0 = 4
+            la		$a0, newline		# 
+            syscall
+            # ======================== Print area to keep track END ====================
+            blt		$t1, $t0, inputLoop	# if $t1 <= $t0 then inputLoop
             
 
 
@@ -178,3 +237,13 @@ main:
         li		$v0, 10		# $v0 = 10
         syscall # all done!
 .end main
+
+
+
+
+
+
+
+
+
+
