@@ -127,22 +127,43 @@ main:
         blt		$t4, 0, negativey1	# if $t4 < 0 then negativey1
         
         # Normal code
-        sub		$t7, $t5, $t3		# $t7 = $t1 - $t2
-        add		$t8, $t4, $t6		# $t8 = $t4 + $t6
-        mul     $t7, $t7, $t8
+        sub		$t7, $t5, $t3		# $t7 = x2-x1
+        add		$t8, $t4, $t6		# $t8 = y2+y1
+        mul     $t7, $t7, $t8       # (y2+y1)*(x2-x1)
 
         mtc1    $t7, $f6
         cvt.d.w $f6, $f6
         l.d     $f8, two
-        div.d   $f6, $f6, $f8
-        add.d   $f4, $f4, $f6
+        div.d   $f6, $f6, $f8       # divide by 2
+        add.d   $f4, $f4, $f6       # add to answer
         j		endif				# jump to endif
 
         # Negative y1 but positive y2
         negativey1:
-        mul     $t6, $t6, -1
-        mul     $t4, $t4, -1
-        j		negativey2				# jump to negativey2
+            mul     $t6, $t6, -1
+            mul     $t4, $t4, -1
+            mul     $t8, $t4, $t4       # y1 squared
+            mul     $t7, $t6, $t6       # y2 squared
+            add		$t7, $t7, $t8		# $t7 = $t7 + $t8
+            
+            sub		$t8, $t5, $t3		# $t8 = $t4 - $t6
+            mul     $t7, $t7, $t8
+
+            mtc1    $t7, $f6
+            cvt.d.w $f6, $f6            # $f6 = (x2-x1)*(y1 squared + y2 squared)
+
+            # move 	$t7, $t6		# $t7 = $t6
+            sub		$t7, $t4, $t6		# $t7 = y1-y2
+            abs     $t7, $t7
+            mtc1    $t7, $f8
+            cvt.d.w $f8, $f8
+            div.d   $f6, $f6, $f8
+            l.d     $f8, two
+            div.d   $f6, $f6, $f8
+            add.d   $f4, $f4, $f6
+            mul     $t6, $t6, -1
+            mul     $t4, $t4, -1
+            j		endif				# jump to endif
         
 
         negativey2: 
@@ -157,10 +178,10 @@ main:
             mul     $t7, $t7, $t8
 
             mtc1    $t7, $f6
-            cvt.d.w $f6, $f6
+            cvt.d.w $f6, $f6            # $f6 = (x2-x1)*(y1 squared + y2 squared)
 
-            move 	$t7, $t6		# $t7 = $t6
-            add		$t7, $t7, $t4		# $t7 = $t7 + $t4
+            # move 	$t7, $t6		# $t7 = $t6
+            sub		$t7, $t4, $t6		# $t7 = y1-y2
             abs     $t7, $t7
             mtc1    $t7, $f8
             cvt.d.w $f8, $f8
@@ -172,20 +193,22 @@ main:
 
             negativeboth:
             # if both y are negative
-            li		$t8, 0 		# $t8 =0    
-            
-            sub		$t7, $t5, $t3		# $t7 = $t1 - $t2
-            sub		$t8, $t8, $t4 	# $t8 = $t4 + $t6
-            sub		$t8, $t8, $t6 	# $t8 = $t4 + $t6
-            
-            mul     $t7, $t7, $t8
-            
-            
-            mtc1    $t7, $f6
-            cvt.d.w $f6, $f6
-            l.d     $f8, two
-            div.d   $f6, $f6, $f8
-            add.d   $f4, $f4, $f6
+                li		$t8, 0 		# $t8 =0    
+                
+                sub		$t7, $t5, $t3		# $t7 = $t1 - $t2
+                sub		$t8, $t8, $t4 	# $t8 = $t4 + $t6
+                sub		$t8, $t8, $t6 	# $t8 = $t4 + $t6
+                
+                mul     $t7, $t7, $t8
+                
+                
+                mtc1    $t7, $f6
+                cvt.d.w $f6, $f6
+                l.d     $f8, two
+                div.d   $f6, $f6, $f8
+                add.d   $f4, $f4, $f6
+                j		endif				# jump to endif
+                
             
 
 
@@ -237,13 +260,3 @@ main:
         li		$v0, 10		# $v0 = 10
         syscall # all done!
 .end main
-
-
-
-
-
-
-
-
-
-
