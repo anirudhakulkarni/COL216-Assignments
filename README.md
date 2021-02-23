@@ -25,15 +25,12 @@ Area under a curve formed by joining successive points by a straight line
 ###### Area Calculation:
 
 - Area of complete polynomial formed using n points can be broken into n-1 trapeziums with 2 sides parallel to y axis and 1 side parallel to x axis.
-  - ![](image/README/1613963384310.png)
-- Area of such a trapezium = h \* (a+b)/2
-- In this case h = X2 - X1, a = Y1, b = Y2. Hence area = (X2-X1)\*(Y2+Y1)/2
-
-_Negative area: This analysis will take care of negative areas too when Y2 is less than 0 corresponding area is substraced_
+- Area is calculated in absolute values. Area below x-axis is negated to get positive area
+- ![](image/README/1614067245720.png)
 
 ###### Registers used:
 
-- ***
+---
 
 ### Test Cases:
 
@@ -50,7 +47,7 @@ Area of single point is 0 irrespective of its x and y coordinates
 
 ###### 3. With 2 points such that positive area = negative area:
 
-3 points at (-10000,-10000), (0,0), (10000,10000). Area1 = -Area2. Hence, Area = Area1+Area2=0
+3 points at (-10000,-10000), (0,0), (10000,10000). Area1 = Area2. Hence, Area = Area1+Area2= 1/2*10000 *10000 \* 2 =
 
 ![](image/README/1613964621733.png)
 

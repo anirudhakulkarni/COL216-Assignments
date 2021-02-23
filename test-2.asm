@@ -129,10 +129,15 @@ main:
         # Normal code
         sub		$t7, $t5, $t3		# $t7 = x2-x1
         add		$t8, $t4, $t6		# $t8 = y2+y1
-        mul     $t7, $t7, $t8       # (y2+y1)*(x2-x1)
-
         mtc1    $t7, $f6
         cvt.d.w $f6, $f6
+        mtc1    $t8, $f8
+        cvt.d.w $f8, $f8
+        mul.d   $f6, $f8, $f6
+#        mul     $t7, $t7, $t8       # (y2+y1)*(x2-x1)
+
+        # mtc1    $t7, $f6
+        # cvt.d.w $f6, $f6
         l.d     $f8, two
         div.d   $f6, $f6, $f8       # divide by 2
         add.d   $f4, $f4, $f6       # add to answer
@@ -142,15 +147,47 @@ main:
         negativey1:
             mul     $t6, $t6, -1
             mul     $t4, $t4, -1
-            mul     $t8, $t4, $t4       # y1 squared
-            mul     $t7, $t6, $t6       # y2 squared
-            add		$t7, $t7, $t8		# $t7 = $t7 + $t8
+            # mul     $t8, $t4, $t4       # y1 squared
+            # mul     $t7, $t6, $t6       # y2 squared
+            # add		$t7, $t7, $t8		# $t7 = $t7 + $t8
+            
+            # sub		$t8, $t5, $t3		# $t8 = $t4 - $t6
+            # mul     $t7, $t7, $t8
+
+            # mtc1    $t7, $f6
+            # cvt.d.w $f6, $f6            # $f6 = (x2-x1)*(y1 squared + y2 squared)
+
+            # # move 	$t7, $t6		# $t7 = $t6
+            # sub		$t7, $t4, $t6		# $t7 = y1-y2
+            # abs     $t7, $t7
+            # mtc1    $t7, $f8
+            # cvt.d.w $f8, $f8
+            # div.d   $f6, $f6, $f8
+            # l.d     $f8, two
+            # div.d   $f6, $f6, $f8
+            # add.d   $f4, $f4, $f6
+
+            mtc1    $t4, $f6
+            cvt.d.w $f6, $f6
+            mtc1    $t6, $f8
+            cvt.d.w $f8, $f8
+            mul.d   $f6, $f6, $f6
+            mul.d   $f8, $f8, $f8
+            add.d $f6, $f8, $f6
+#-------------------------------------------------------------------
+            # mul     $t8, $t4, $t4       # y1 squared
+            # mul     $t7, $t6, $t6       # y2 squared
+            # add		$t7, $t7, $t8		# $t7 = $t7 + $t8
             
             sub		$t8, $t5, $t3		# $t8 = $t4 - $t6
-            mul     $t7, $t7, $t8
+            mtc1    $t8, $f8
+            cvt.d.w $f8, $f8
+            mul.d   $f6, $f6, $f8
 
-            mtc1    $t7, $f6
-            cvt.d.w $f6, $f6            # $f6 = (x2-x1)*(y1 squared + y2 squared)
+
+
+            # mtc1    $t7, $f6
+            # cvt.d.w $f6, $f6            # $f6 = (x2-x1)*(y1 squared + y2 squared)
 
             # move 	$t7, $t6		# $t7 = $t6
             sub		$t7, $t4, $t6		# $t7 = y1-y2
@@ -168,17 +205,29 @@ main:
 
         negativey2: 
             blt		$t4, 0, negativeboth	# if $t4 < 0 then negativeboth
-            # if only y2 is negative
+            # if y2 is negative y1 positive
 
-            mul     $t8, $t4, $t4       # y1 squared
-            mul     $t7, $t6, $t6       # y2 squared
-            add		$t7, $t7, $t8		# $t7 = $t7 + $t8
+            mtc1    $t4, $f6
+            cvt.d.w $f6, $f6
+            mtc1    $t6, $f8
+            cvt.d.w $f8, $f8
+            mul.d   $f6, $f6, $f6
+            mul.d   $f8, $f8, $f8
+            add.d $f6, $f8, $f6
+#-------------------------------------------------------------------
+            # mul     $t8, $t4, $t4       # y1 squared
+            # mul     $t7, $t6, $t6       # y2 squared
+            # add		$t7, $t7, $t8		# $t7 = $t7 + $t8
             
             sub		$t8, $t5, $t3		# $t8 = $t4 - $t6
-            mul     $t7, $t7, $t8
+            mtc1    $t8, $f8
+            cvt.d.w $f8, $f8
+            mul.d   $f6, $f6, $f8
 
-            mtc1    $t7, $f6
-            cvt.d.w $f6, $f6            # $f6 = (x2-x1)*(y1 squared + y2 squared)
+
+
+            # mtc1    $t7, $f6
+            # cvt.d.w $f6, $f6            # $f6 = (x2-x1)*(y1 squared + y2 squared)
 
             # move 	$t7, $t6		# $t7 = $t6
             sub		$t7, $t4, $t6		# $t7 = y1-y2
@@ -199,12 +248,18 @@ main:
                 sub		$t8, $t8, $t4 	# $t8 = $t4 + $t6
                 sub		$t8, $t8, $t6 	# $t8 = $t4 + $t6
                 
-                mul     $t7, $t7, $t8
-                
-                
                 mtc1    $t7, $f6
                 cvt.d.w $f6, $f6
+                mtc1    $t8, $f8
+                cvt.d.w $f8, $f8
+                mul.d   $f6, $f8, $f6
                 l.d     $f8, two
+                # mul     $t7, $t7, $t8
+                
+                
+                # mtc1    $t7, $f6
+                # cvt.d.w $f6, $f6
+                # l.d     $f8, two
                 div.d   $f6, $f6, $f8
                 add.d   $f4, $f4, $f6
                 j		endif				# jump to endif
@@ -214,8 +269,8 @@ main:
 
         # ======================== Print area to keep track ====================
         endif:
+            # Loop propogation and printing all the details
 
-            
             move 	$t3, $t5		# $t3 = $t5
             move 	$t4, $t6		# $t4 = $t6
             s.d		$f4, area		# 
