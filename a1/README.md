@@ -21,15 +21,18 @@ Area under a curve formed by joining successive points by a straight line
 
 ##### Design:
 
-- User enters number of points
-- For each point user enters x coordinate and y coordinate
-- User is notified each time :
+- User enters number of points and x coordinate and y coordinate for each point
+- User is notified each time with:
   1. index of current point
   2. whether he is entering x coordinate or y coordinate
   3. area calculated so far so that user can deduce if something is wrong like negative area due to overflow without needing to enter large number of points
-- Final area is printed
-- For bad n values program is terminated with custom message
+- For bad n like negative or 0 program is terminated with custom message
 - Program termination message to avoid confusion
+- Same registers are rewritten to use less registers as possible
+- Intermediate products and area is stored in double so as to give maximum precision possible
+- intermediate sum and differences are stored in 32 bit integer as, if products doesnt exceed 64 bit double then it will not exceed 32 bit int
+- Absolute area is calculated by taking absolute values for negative portion
+- conditioners are handled by using branches
 
 ##### Workflow:
 
@@ -103,8 +106,8 @@ for same x coordinate width of curve is 0 hence area should be 0 irrespective of
 
 ##### 7. Random numbers:
 
+This test case contain all the 4 cases mentioned above.
+
 ![](image/README/1614070151380.png)
 
-![](image/README/1614070187545.png)
-
-![](image/README/1614070240388.png)
+which matches with actual calculated area = 453.918
