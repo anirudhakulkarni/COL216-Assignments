@@ -63,7 +63,7 @@ main:
         beq		$a0, 43, addition       	# if $a0 == 43 then addition
         beq		$a0, 45, subtraction	    # if $a0 == 45 then substract
         beq		$a0, 47, inputexception	    # if $a0 == 47 then division
-        beq		$a0, 120, multiplication	# if $a0 == 43 then addition
+        beq		$a0, 120, multiplication	# if $a0 == 120then multiplication
         blt     $a0, 48, inputexception	    # throw exception for ascii value below '0'
     	bgt	    $a0, 57, inputexception 	# throw exception for ascii value above '9'
 
