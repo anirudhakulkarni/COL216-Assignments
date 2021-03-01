@@ -1,9 +1,3 @@
-# MIPS Assembly Program for evaluating an expression in postfix format
-
-# -------------------------
-
-# Data Declarations
-
 .data 
 
     prompt:     .asciiz     "Enter the Postfix Expression: "
@@ -11,10 +5,13 @@
     lengthIs:     .asciiz     "Length of exp is: "
     buffer:     .space      100
     endl:       .asciiz "\n"
-    add2:        .asciiz "adding\n"
-    mult2:        .asciiz "multiplying\n"
-    substr2:        .asciiz "substracting\n"
+    add2:        .asciiz "Adding: "
+    mult2:        .asciiz "Multiplying: "
+    substr2:        .asciiz "Subtracting: "
     div2:        .asciiz "dividing\n"
+    errormsg: .asciiz " is not input. What the fuck is that input you donkey"
+    equals: .asciiz "= "
+    ands: .asciiz " & "
     
 # -------------------------
 # Text / Code Section
@@ -42,8 +39,6 @@ main:
     
     jal		printLength				# jump to printEnd and save position to $ra
     jal		printEnd				# jump to printEnd and save position to $ra
-
-
     # Loop initialisation
     li		$t0, 0		# $t0 = 1 Loop iteral
     move 	$t1, $s1		# $t1 = $s1 address
@@ -54,30 +49,29 @@ main:
         beq		$a0, 42, multiplication	# if $a0 == 43 then multiplication
         beq		$a0, 43, addition	# if $a0 == 43 then addition
         beq		$a0, 45, substraction	# if $a0 == 45 then substract
-        beq		$a0, 47, divide	# if $a0 == 43 then addition
+        beq		$a0, 47, inputexception	# if $a0 == 43 then addition
         beq		$a0, 120, multiplication	# if $a0 == 43 then addition
-        
+        blt     $a0, 48, inputexception	# throw exception for ascii value below '0'
+    	bgt	    $a0, 57, inputexception 	# throw exception for ascii value above '9'
+
         # andi $a0,$a0,0x0F
         add		$a0, $a0, -48		# $a0 = $a0 + 15
-        
-        li		$v0, 1		# $v0 =0 
-        syscall
-        jal		printEnd				# jump to printEnd and save position to $ra
-        
-        addi	$t1, $t1, 1			# $t1 = $t1 + 1
-        addi	$t0, $t0, 1			# $t0 = $t0 + 1
-        ble		$t0, $s0, forLoop	# if $t0 <= $s0 then forLoop
+        # mul     $a0, $a0, 17
+        jal		push_stack				# jump to push_stack and save position to $ra
+        propForLoop:
+            addi	$t1, $t1, 1			# $t1 = $t1 + 1
+            addi	$t0, $t0, 1			# $t0 = $t0 + 1
+            ble		$t0, $s0, forLoop	# if $t0 <= $s0 then forLoop
         
     exitFor:
         la		$a0, result		# 
         li		$v0, 4		# $v0 = 4
         syscall
-
-        la		$a0, buffer		# 
-        li		$v0, 4		# $v0 = 4
+        lb		$a0, ($sp)	
+        li		$v0, 1		# $v0 = 4
         syscall
-            li		$v0, 10		# $v0 = 10
-            syscall # all done!
+        li		$v0, 10		# $v0 = 10
+        syscall # all done!
 .end main
 
 stringLength:
@@ -99,30 +93,106 @@ printEnd:
     la		$a0, endl		# 
     syscall
     jr		$ra					# jump to $ra
+printEquals:
+    li		$v0, 4		# $v0 = 4
+    la		$a0, equals		# 
+    syscall
+    jr		$ra					# jump to $ra
+printAnd:
+    li		$v0, 4		# $v0 = 4
+    la		$a0, ands		# 
+    syscall
+    jr		$ra					# jump to $ra
+
+
+printLength:
+    li		$v0, 4		# $v0 = 4
+    la		$a0, lengthIs		# 
+    syscall
+    li		$v0, 1		# $v0 = 4
+    move	$a0, $s0		# 
+    syscall
+    jr		$ra					# jump to $ra
+
+inputexception:
+    li		$v0, 1		# $v0 = 4
+    syscall
+    
+    li		$v0, 4		# $v0 = 4
+    la		$a0, errormsg		# 
+    syscall
+    li		$v0, 10		# $v0 = 10
+    syscall # all done!
 
 addition:
     li		$v0, 4		# $v0 = 4
     la		$a0, add2		# 
+    syscall    
+    jal		pop_stack				# jump to pop_stack and save position to $ra
+    
+    li		$v0, 1		# $v0 = 1
+    move 	$a0, $t3		# $a0 = $t3
     syscall
-    addi	$t1, $t1, 1			# $t1 = $t1 + 1
-    addi	$t0, $t0, 1			# $t0 = $t0 + 1
-    j		forLoop				# jump to forLoop
+    jal		printAnd				# jump to printAnd and save position to $ra
+    
+    li		$v0, 1		# $v0 = 1
+    move 	$a0, $t4		# $a0 = $t3
+    syscall
+    jal		printEnd				# jump to printEnd and save position to $ra
+    jal		printEquals				# jump to printEquals and save position to $ra
+    
+    add		$a0, $t3, $t4		# $t3 = $t3 + $t4
+    li		$v0, 1		# $v0 = 4
+    syscall
+    jal		push_stack				# jump to push_stack and save position to $ra
+    jal		printEnd				# jump to printEnd and save position to $ra
+    
+    j		propForLoop				# jump to forLoop
 
 substraction:
     li		$v0, 4		# $v0 = 4
     la		$a0, substr2		# 
     syscall
-    addi	$t1, $t1, 1			# $t1 = $t1 + 1
-    addi	$t0, $t0, 1			# $t0 = $t0 + 1
-    j		forLoop				# jump to forLoop
+    jal		pop_stack				# jump to pop_stack and save position to $ra
+    li		$v0, 1		# $v0 = 1
+    move 	$a0, $t3		# $a0 = $t3
+    syscall
+    jal		printAnd				# jump to printAnd and save position to $ra
+    li		$v0, 1		# $v0 = 1
+    move 	$a0, $t4		# $a0 = $t3
+    syscall
+    jal		printEnd				# jump to printEnd and save position to $ra
+    jal		printEquals				# jump to printEquals and save position to $ra
+    
+    sub		$a0, $t4, $t3		# $t3 = $t3 + $t4
+    li		$v0, 1		# $v0 = 4
+    syscall
+    jal		push_stack				# jump to push_stack and save position to $ra
+    jal		printEnd				# jump to printEnd and save position to $ra
+    
+    j		propForLoop				# jump to forLoop
 
 multiplication:
     li		$v0, 4		# $v0 = 4
     la		$a0, mult2		# 
     syscall
-    addi	$t1, $t1, 1			# $t1 = $t1 + 1
-    addi	$t0, $t0, 1			# $t0 = $t0 + 1
-    j		forLoop				# jump to forLoop
+    jal		pop_stack				# jump to pop_stack and save position to $ra
+    li		$v0, 1		# $v0 = 1
+    move 	$a0, $t3		# $a0 = $t3
+    syscall
+    jal		printAnd				# jump to printAnd and save position to $ra
+    li		$v0, 1		# $v0 = 1
+    move 	$a0, $t4		# $a0 = $t3
+    syscall
+    jal		printEnd				# jump to printEnd and save position to $ra
+    jal		printEquals				# jump to printEquals and save position to $ra
+    
+    mul		$a0, $t3, $t4		# $t3 = $t3 + $t4
+    li		$v0, 1		# $v0 = 4
+    syscall
+    jal		push_stack				# jump to push_stack and save position to $ra
+    jal		printEnd				# jump to printEnd and save position to $ra
+    j		propForLoop				# jump to forLoop
 
 divide:
     li		$v0, 4		# $v0 = 4
@@ -132,11 +202,14 @@ divide:
     addi	$t0, $t0, 1			# $t0 = $t0 + 1
     j		forLoop				# jump to forLoop
 
-printLength:
-    li		$v0, 4		# $v0 = 4
-    la		$a0, lengthIs		# 
-    syscall
-    li		$v0, 1		# $v0 = 4
-    move	$a0, $s0		# 
-    syscall
+push_stack:
+    subu    $sp, $sp, 4
+    sw		$a0, ($sp)		# 
+    jr		$ra					# jump to $ra
+    
+pop_stack:
+    
+    lb		$t3, ($sp)		# 
+    lb		$t4, 4($sp)		# 
+    addu    $sp, $sp, 8
     jr		$ra					# jump to $ra
