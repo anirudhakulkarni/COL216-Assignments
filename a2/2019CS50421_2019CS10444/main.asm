@@ -1,12 +1,13 @@
 # Mips Assembly program to evaluate a Postfix Expression
-
+# Anirudha Kulkarni 2019CS50421
+# Pratyush Saini 2019CS10444
 # -----------------------------------------------------
 
 # Data Declarations
 
 .data 
 
-    prompt:         .asciiz     "Enter the Postfix Expression: "
+    prompt:         .asciiz     "This evaluates postfix expressions to corresponding value.\nAccepted characters in expressions are 0 to 9 integers and * + - operators.\nEnter the Postfix Expression: "
     result:         .asciiz     "The Expression evaluates to: "
     lengthIs:       .asciiz     "Length of exp is: "
     buffer:         .space      100
@@ -15,10 +16,10 @@
     mult2:          .asciiz     "Multiplying: "
     substr2:        .asciiz     "Subtracting: "
     div2:           .asciiz     "dividing\n"
-    errormsg:       .asciiz     "Invalid Input expression. Enter expressions with [0-9+-*x]* only!!!"
-    stack_emt:      .asciiz     "Invalid Input Expression. Empty Stack State encountered"
-    stack_nemt:     .asciiz     "Invalid Expression. Stack has more than 1 element after evaluation"     
-    emptyInputmsg:  .asciiz     "Empty expression"
+    errormsg:       .asciiz     "Invalid Postfix Expression. Enter expressions with 0-9 integers and * + - operators only"
+    stack_emt:      .asciiz     "Invalid Postfix Expression. Attempted to pop from empty stack"
+    stack_nemt:     .asciiz     "Invalid Postfix Expression. Stack has more than 1 element after evaluation"     
+    emptyInputmsg:  .asciiz     "Empty expression! If it is not by mistake then evaluates to 0"
     equals:         .asciiz     "= "
     ands:           .asciiz     " & "
     from:           .asciiz     " from "
