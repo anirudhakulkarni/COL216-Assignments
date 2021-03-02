@@ -18,6 +18,7 @@
     errormsg:       .asciiz     "Invalid Input expression. Enter expressions with [0-9+-*x]* only!!!"
     stack_emt:      .asciiz     "Invalid Input Expression. Empty Stack State encountered"
     stack_nemt:     .asciiz     "Invalid Expression. Stack has more than 1 element after evaluation"     
+    emptyInputmsg:  .asciiz     "Empty expression"
     equals:         .asciiz     "= "
     ands:           .asciiz     " & "
     from:           .asciiz     " from "
@@ -55,6 +56,7 @@ main:
     # Loop initialisation
     li		$t0, 0		                    # $t0 = 1 Loop iteral
     move 	$t1, $s1		                # $t1 = $s1 address
+    beq		$s0, 0, emptyInput	# if $s0 == 0 then emptyInput
     forLoop:
         beq		$t0, $s0, exitFor	        # if $t0 == $s0 then exitFor
         
@@ -135,9 +137,6 @@ printLength:
     jr		$ra					# jump to $ra
 
 inputexception:
-    li		$v0, 1		# $v0 = 4
-    syscall
-    
     li		$v0, 4		# $v0 = 4
     la		$a0, errormsg		# 
     syscall
@@ -151,6 +150,13 @@ stack_empty:
     syscall
     li		$v0, 10		# $v0 = 10
     syscall 
+
+emptyInput:
+    li		$v0, 4		# $v0 = 4
+    la		$a0, emptyInputmsg		# 
+    syscall
+    li		$v0, 10		# $v0 = 10
+    syscall
 
 stack_nonemp:
 
