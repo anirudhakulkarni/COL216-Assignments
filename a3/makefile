@@ -7,7 +7,7 @@ TARGET = main
 BUILD_DIR = ./build
 OUT_DIR = ./outputs
 LIB = pkg-config --cflags --libs
-TESTFILE= input.txt
+TESTFILE= ../input.txt
 all: clean build run
 clean:
 	@echo Removing old build files :
