@@ -305,9 +305,6 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
     cout << memory.getCurrInstr(1) << endl;
     while (currentInstr != "")
     {
-        std::vector<std::string> vectReg;
-        std::vector<std::string> vectInstr;
-        filter_instruction(currentInstr, vectReg, vectInstr);
         cout << currentInstr;
         cout.flush();
         cout << "Current Instruction : " << currentInstr << endl;
