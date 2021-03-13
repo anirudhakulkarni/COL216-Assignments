@@ -207,7 +207,12 @@ public:
     }
     int getAddOfLabel(string label)
     {
-
+        if (addofLabels.find(label) == addofLabels.end())
+        {
+            cout << endl;
+            cout << "INVALID Branch Detected!! : " << label << endl;
+            throw exception();
+        }
         return addofLabels.at(label);
     }
     string getCurrInstr(int current)
