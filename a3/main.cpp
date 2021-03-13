@@ -243,11 +243,11 @@ void filter_instruction(string &currentInstr, std::vector<std::string> vectReg, 
 }
 int getMemAdd(string add, RegisterFile &registerFile){
 
-        size_t start = out[1].find_first_of("(");
-        size_t end = out[1].find_first_of(")");
+        size_t start = add.find_first_of("(");
+        size_t end = add.find_first_of(")");
         int sz = end - start -1;
-        string reg = out[1].substr(start+1, sz);
-        stringstream ss(out[1].substr(0, start-1));
+        string reg = add.substr(start+1, sz);
+        stringstream ss(add.substr(0, start-1));
         int off;
         ss >> off;
         int add_memory = registerFile.get_register_data(reg);
