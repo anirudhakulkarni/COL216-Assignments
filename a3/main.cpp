@@ -147,111 +147,74 @@ public:
 };
 class MemoryUnit
 {
-private:
-    string MemArray[1048576];
-    //array of string of size 2**20, initialized with empty strings
-
-    int currInstrId;
-    //starts from 0
-
-    int currVarId;
-    //starts from size(MemArray) / 2;
-
-    int partition;
-    //size(address) / 2
-
-    //address of data_vars = partition + data_address;
-    map<string, int> addofLabels;
-    //Maps string of Label(Named Instruction) to it's address in MemArray
-
-    map<string, int> addofVars;
-    //Maps Variable name to it's address in MemArray, i.e. partition + var_address
-
-    map<int, int> valofVars;
-    //Maps address of data_var to value of data_var
-
 public:
-    MemoryUnit();
-    //Constructor
-
-    void storeInstr(string instruction);
-    //store the Instruction to next Memory Position
-
-    int getAddOfLabel(string label);
-    string getCurrInstr(int current);
-    void setData(string variable, int value);
-    int getData(string variable);
-    void setDataAdd(int address, int value);
-    int getDataAdd(int address);
-    void printMemContent();
-};
-MemoryUnit::MemoryUnit()
-{
-    //MemArray = new string[1048576];
-    for (int it = 0; it < 1048576; it++)
+    string MemArray[100];
+    int currInstrId = 0;
+    int currVarId = 0;
+    int partition = 100/2;
+    map<string, int> addofLabels;
+    map<string, int> addofVars;
+    map<int, int> valofVars;
+    MemoryUnit(){
+    for (int it = 0; it < 100; it++)
         MemArray[it] = "";
     currInstrId = 0;
-    currVarId = 1048576 / 2;
-    partition = 1048576 / 2;
-}
+    currVarId = 100 / 2;
+    partition = 100 / 2;
+    }
+    void storeInstr(string instruction){
+        if (instruction.find(",") == std::string::npos)
+        {
+            addofLabels[instruction] = currInstrId;
+            cout << "fsd "<< addofLabels[instruction] << endl;
+        }
+        else{
+            MemArray[currInstrId++] = instruction;
+        }
+    }
+    int getAddOfLabel(string label){
+        if (addofLabels.find(label) == addofLabels.end())
+            return -1;
+        return addofLabels[label];
+    }
+    string getCurrInstr(int current){
+        return MemArray[current];
+    }
+    void setData(string variable, int value){
+        if (addofVars.find(variable) == addofVars.end()){
+            addofVars[variable] = currVarId;
+            valofVars[addofVars[variable]] = value;
+            currVarId++;
+        }
+        valofVars[addofVars[variable]] = value;
+    }
+    int getData(string variable){
+        if (addofVars.find(variable) == addofVars.end()) return -1;
+        return valofVars[addofVars[variable]];
+    }
+    void setDataAdd(int address, int value){
+        valofVars[address + partition] = value;
+    }
+    int getDataAdd(int address){
+        return valofVars[address];
+    }
+    void printMemContent(){
+        int curr_int = 0;
+        if (MemArray[curr_int] == ""){
+            cout << "fault" << endl;
+        }else{
+            cout << "good" << endl;
+        }
+        while(MemArray[curr_int]!=""){
+            cout << "Memory Instruction at Address: " <<curr_int << " is: " << MemArray[curr_int] << endl;
+        }
+        curr_int = 100 / 2;
+        while(MemArray[curr_int]!=""){
+            cout << "Memory Instruction at Address: " <<curr_int << " is: " << MemArray[curr_int] << endl;
+        }
+    }
+};
 
-inline void MemoryUnit::storeInstr(string instruction)
-{
-    if (instruction.find(",") == std::string::npos)
-    {
-        addofLabels[instruction] = currInstrId+1;
-    }
-    else{
-        MemArray[++currInstrId] = instruction;
-    }
-}
-inline int MemoryUnit::getAddOfLabel(string label)
-{
-    // label is simply a string used to name a location in memory
-    //may refer to the location of a data value (variable) or of an instruction
-    if (addofLabels.find(label) == addofLabels.end())
-        return -1;
-    return addofLabels[label];
-}
-inline string MemoryUnit::getCurrInstr(int current)
-{
-    return MemArray[current];
-}
-inline void MemoryUnit::setData(string variable, int value)
-{
-    if (addofVars.find(variable) == addofVars.end())
-        addofVars[variable] = ++currVarId;
-    valofVars[addofVars[variable]] = value;
-}
-inline int MemoryUnit::getData(string variable)
-{
-    if (addofVars.find(variable) == addofVars.end())
-        return -1;
-    return valofVars[addofVars[variable]];
-}
-inline void MemoryUnit::setDataAdd(int add, int value)
-{
-    valofVars[add + partition] = value;
-}
-inline int MemoryUnit::getDataAdd(int address)
-{
-    return valofVars[address];
-}
-void MemoryUnit::printMemContent(){
-    int curr_int = 0;
-    if (MemArray[curr_int] == ""){
-        cout << "fault" << endl;
-    }else{
-        cout << "good" << endl;
-    }
-    while(MemArray[curr_int]!=""){
-        cout << "Memory Instruction at Address: " <<curr_int << " is: " << MemArray[curr_int] << endl;
-    }
-    curr_int = 1048576 / 2;
-    while(MemArray[curr_int]!=""){
-        cout << "Memory Instruction at Address: " <<curr_int << " is: " << MemArray[curr_int] << endl;
-    }
-}
 void tokenize(std::string const &str, const char delim,
               std::vector<std::string> &out)
 {
@@ -300,7 +263,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         memory.storeInstr(instructionVector[i]);
     }
     string currentInstr = memory.getCurrInstr(0);
-    cout << memory.getCurrInstr(1) << endl;
+    //cout << memory.getCurrInstr(1) << endl;
     while (currentInstr != "")
     {
         //registerFile.set_register_data("$s1", 10);
