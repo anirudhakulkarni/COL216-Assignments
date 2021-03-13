@@ -1,1 +1,7 @@
-F
+temp:6
+add $s1, $s2, 1017
+main:6
+add $s1, $s2, 1017
+j main28
+main2:7
+add $s1, $s2, 1016

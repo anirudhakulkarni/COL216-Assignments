@@ -4,6 +4,10 @@
 #include <string>
 #include <sstream>
 #include <bits/stdc++.h>
+#define fio                           \
+    ios_base::sync_with_stdio(false); \
+    cin.tie(NULL);                    \
+    cout.tie(NULL)
 
 using namespace std;
 template <class T>
@@ -33,13 +37,13 @@ string remove_extra_whitespaces(const string &input)
 
     return output;
 }
-vector<string> getInstrucVec(ifstream &infile)
+vector<string> getInstrucVec(fstream &infile)
 {
     vector<string> temp;
     string test2;
     while (getline(infile, test2))
     {
-        temp.push_back(remove_extra_whitespaces(test2));
+        temp.push_back(test2);
     }
     return temp;
 }
@@ -165,14 +169,19 @@ public:
     }
     void storeInstr(string instruction)
     {
-        if (instruction.find(",") == std::string::npos)
+
+        if (instruction.find(":") != string::npos)
         {
-            addofLabels[instruction] = currInstrId;
-            cout << instruction << addofLabels[instruction] << endl;
+            // label
+            addofLabels.insert(pair<string, int>(instruction, currInstrId));
         }
         else
         {
-            MemArray[currInstrId++] = instruction;
+            cout << instruction << endl;
+            cout << currInstrId << endl;
+            MemArray[currInstrId] = instruction;
+
+            currInstrId++;
         }
     }
     int getAddOfLabel(string label)
@@ -190,7 +199,6 @@ public:
         if (addofVars.find(variable) == addofVars.end())
         {
             addofVars[variable] = currVarId;
-            valofVars[addofVars[variable]] = value;
             currVarId++;
         }
         valofVars[addofVars[variable]] = value;
@@ -277,21 +285,29 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
     int programCounter = 0;
     for (int i = 0; i < instructionVector.size(); i++)
     {
-        memory.storeInstr(instructionVector[i]);
+        string temp = instructionVector[i];
+        memory.storeInstr(temp);
     }
     string currentInstr = memory.getCurrInstr(0);
-    cout << memory.getCurrInstr(0) << "XXXX" << memory.getCurrInstr(1) << endl;
+    cout << currentInstr << endl;
+    cout.flush();
+    cout << "XXXX";
+    cout << memory.getCurrInstr(1) << endl;
     while (currentInstr != "")
     {
+        cout << currentInstr;
+        cout.flush();
         cout << "Current Instruction : " << currentInstr << endl;
-        //registerFile.set_register_data("$s1", 10);
-        // Assume that instructions are in format instruction_register,_register etc. only 1 space and 1 comma
-        std::vector<std::string> vectReg;
-        std::vector<std::string> vectInstr;
-        filter_instruction(currentInstr, vectReg, vectInstr);
+        cout << "NOT HERE\n";
+        cout.flush();
+        cout.flush();
+        vector<string> vectReg;
+        cout << "NOT HERE\n";
 
-        //vect has only one element, the current instruction
-        //vect Reg
+        vector<string> vectInstr;
+        cout << "NOT HERE\n";
+        filter_instruction(currentInstr, vectReg, vectInstr);
+        cout << "NOT HERE2\n";
         for (auto &reg : vectReg)
         {
             reg.erase(remove(reg.begin(), reg.end(), ' '), reg.end());
@@ -299,6 +315,8 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         if (vectInstr[0] == "add")
         {
             string Rdest = vectReg[0], Rsrc = vectReg[1], Src = vectReg[2];
+            cout << "MOTHERF\n";
+            cout << Rdest << Rsrc << Src << endl;
             registerFile.set_register_data(Rdest, registerFile.get_register_data(Rsrc) + registerFile.get_register_data(Src));
             programCounter++;
         }
@@ -400,9 +418,6 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         {
             cout << "Raise exception. Unknown instruction found" << endl;
         }
-
-        /* PROCESS INSTRUCTION*/
-
         cout << "Instruction number executed: " << instructionsSoFar << endl;
         registerFile.printRegisters();
         currentInstr = memory.getCurrInstr(programCounter);
@@ -412,8 +427,10 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
 
 int main(int argc, char const *argv[])
 {
+    fio;
     // Input file section
-    ifstream infile;
+    fstream infile;
+    fstream outfile;
     if (argc < 2)
     {
         infile.open("../input.txt", ios::in);
@@ -422,12 +439,18 @@ int main(int argc, char const *argv[])
     {
         infile.open(argv[1]);
     }
-    vector<string> instructionVector = getInstrucVec(infile);
+    vector<string> instructionVector;
+    string test2;
+    while (getline(infile, test2))
+    {
+        instructionVector.push_back(test2);
+    }
+    outfile.open("../output.txt", ios::out);
     for (int i = 0; i < instructionVector.size(); i++)
     {
-        cout << instructionVector[i] << endl;
+        outfile << instructionVector[i] << instructionVector[i].length() << endl;
     }
-
+    cout << "Printing instruction vector over" << endl;
     // Declarations
     RegisterFile registerFile;
     MemoryUnit memory;

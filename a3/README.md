@@ -75,4 +75,7 @@ Find extensive testing details under Testing/README.md
 
 ![](image/README/1615552249219.png)
 
+Dataflow:
+
+1. instruction vector contains instructions in format: "abc abasas, saffsa, asf" etc
 2.
