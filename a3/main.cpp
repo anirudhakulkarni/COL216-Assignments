@@ -23,7 +23,25 @@ string remove_extra_whitespaces(const string &input)
     {
         output = output.substr(1);
     }
+    for (int i = 0; i < output.length() - 1; i++)
+    {
+        if (output[i] == ',' && output[i + 1] != ' ')
+        {
+            output = output.substr(0, i + 1) + " " + output.substr(i + 1);
+        }
+    }
+
     return output;
+}
+vector<string> getInstrucVec(ifstream &infile)
+{
+    vector<string> temp;
+    string test2;
+    while (getline(infile, test2))
+    {
+        temp.push_back(remove_extra_whitespaces(test2));
+    }
+    return temp;
 }
 
 class RegisterFile
@@ -149,10 +167,14 @@ public:
     }
     int get_register_data(string register_name)
     {
-        return regArray[get_regno(register_name)];
+        if (register_name[0] == '$')
+            return regArray[get_regno(register_name)];
+        else
+            return stoi(register_name);
     }
     void set_register_data(string register_name, int data)
     {
+        // BUG : Assumed that $zero register is $ze everywhere due to parsing convinience as len of each register name is 3 example $s1, $t7
         regArray[get_regno(register_name)] = data;
     }
     void printRegisters()
@@ -168,6 +190,8 @@ public:
 class MemoryArray
 {
 private:
+    // named instructions : label
+    // named data: given name of memory location return address of location. can use map
 public:
     void storeInstr(string instruction)
     {
@@ -177,42 +201,113 @@ public:
     {
         return 0;
     }
-    string getFirstInstr()
+    string getCurrInstr(int current)
     {
-        return "Sunny didi";
+        return "";
     }
-    string getNextInstr(string currentInstr)
+    void setData(string variable, int value)
     {
-        // Take care of jump instructions. If current is jump or branch then use map to get address of label and return that instruction. Do appropriately
-        return "Johny bhaiyya";
+        return;
+    }
+    int getData(string variable)
+    {
+        return 0;
     }
 };
-
-vector<string> getInstructions(ifstream &infile)
-{
-    vector<string> temp;
-    string test2;
-    while (getline(infile, test2))
-    {
-        temp.push_back(remove_extra_whitespaces(test2));
-    }
-    return temp;
-}
 
 void processInstructions(vector<string> instructionVector, RegisterFile &registerFile, MemoryArray &memory)
 {
     int instructionsSoFar = 1;
+    int programCounter = 0;
     for (int i = 0; i < instructionVector.size(); i++)
     {
         memory.storeInstr(instructionVector[i]);
     }
-    string currentInstr = memory.getFirstInstr();
+    string currentInstr = memory.getCurrInstr(0);
     while (currentInstr != "")
     {
+        // Assume that instructions are in format instruction_register,_register etc. only 1 space and 1 comma
+        if (currentInstr.substr(0, 3) == "add")
+        {
+            string Rdest = currentInstr.substr(4, 3), Rsrc = currentInstr.substr(9, 3), Src = currentInstr.substr(14);
+            registerFile.set_register_data(Rdest, registerFile.get_register_data(Rsrc) + registerFile.get_register_data(Src));
+            programCounter++;
+        }
+        else if (currentInstr.substr(0, 3) == "sub")
+        {
+            string Rdest = currentInstr.substr(4, 3), Rsrc = currentInstr.substr(9, 3), Src = currentInstr.substr(14);
+            registerFile.set_register_data(Rdest, registerFile.get_register_data(Rsrc) - registerFile.get_register_data(Src));
+            programCounter++;
+        }
+        else if (currentInstr.substr(0, 3) == "mul")
+        {
+            string Rdest = currentInstr.substr(4, 3), Rsrc = currentInstr.substr(9, 3), Src = currentInstr.substr(14);
+            registerFile.set_register_data(Rdest, registerFile.get_register_data(Rsrc) * registerFile.get_register_data(Src));
+            programCounter++;
+        }
+        else if (currentInstr.substr(0, 3) == "beq")
+        {
+            string Rsrc1 = currentInstr.substr(4, 3), Src2 = currentInstr.substr(9, 3), label = currentInstr.substr(14);
+            if (registerFile.get_register_data(Rsrc1) == registerFile.get_register_data(Src2))
+            {
+                programCounter = memory.getAddOfLabel(label);
+            }
+            else
+            {
+                programCounter++;
+            }
+        }
+        else if (currentInstr.substr(0, 3) == "bne")
+        {
+            string Rsrc1 = currentInstr.substr(4, 3), Src2 = currentInstr.substr(9, 3), label = currentInstr.substr(14);
+            if (registerFile.get_register_data(Rsrc1) != registerFile.get_register_data(Src2))
+            {
+                programCounter = memory.getAddOfLabel(label);
+            }
+            else
+            {
+                programCounter++;
+            }
+        }
+        else if (currentInstr.substr(0, 3) == "slt")
+        {
+            string Rdest = currentInstr.substr(4, 3), Rsrc1 = currentInstr.substr(9, 3), Src2 = currentInstr.substr(14);
+            if (registerFile.get_register_data(Rsrc1) < registerFile.get_register_data(Src2))
+            {
+                registerFile.set_register_data(Rdest, 1);
+            }
+            else
+            {
+                registerFile.set_register_data(Rdest, 0);
+            }
+        }
+        else if (currentInstr.substr(0, 1) == "j")
+        {
+            string label = currentInstr.substr(2);
+            programCounter = memory.getAddOfLabel(label);
+        }
+        else if (currentInstr.substr(0, 2) == "lw")
+        {
+            string Rdest = currentInstr.substr(3, 3), mem = currentInstr.substr(8);
+            registerFile.set_register_data(Rdest, memory.getData(mem));
+            programCounter++;
+        }
+        else if (currentInstr.substr(0, 2) == "sw")
+        {
+            string Rdest = currentInstr.substr(3, 3), mem = currentInstr.substr(8);
+            memory.setData(mem, registerFile.get_register_data(Rdest));
+            programCounter++;
+        }
+        else
+        {
+            cout << "Raise exception. Unknown instruction found" << endl;
+        }
+
         /* PROCESS INSTRUCTION*/
+
         cout << "Instruction number executed: " << instructionsSoFar << endl;
         registerFile.printRegisters();
-        currentInstr = memory.getNextInstr(currentInstr);
+        currentInstr = memory.getCurrInstr(programCounter);
         instructionsSoFar++;
     }
 }
@@ -229,7 +324,12 @@ int main(int argc, char const *argv[])
     {
         infile.open(argv[1]);
     }
-    vector<string> instructionVector = getInstructions(infile);
+    vector<string> instructionVector = getInstrucVec(infile);
+    for (int i = 0; i < instructionVector.size(); i++)
+    {
+        cout << instructionVector[i] << endl;
+    }
+
     // Declarations
     RegisterFile registerFile;
     MemoryArray memory;
@@ -240,55 +340,3 @@ int main(int argc, char const *argv[])
 
     return 0;
 }
-
-//EXTRA
-
-// void printRegisterFile(map<string, pair<int, int>> registerFile)
-// {
-//     // Input: array containing register file
-//     // output: prints containts of register file
-//     // Assumptions: size of array is 32
-//     map<string, pair<int, int>>::iterator itr;
-//     cout << "\nThe map registerFile is : \n";
-//     cout << "\tKEY\tELEMENT\n";
-//     for (itr = registerFile.begin(); itr != registerFile.end(); ++itr)
-//     {
-//         cout << '\t' << itr->first
-//              << '\t' << itr->second.first << '\n';
-//     }
-// }
-// void initializeRegisterFile(map<string, pair<int, int>> &registerFile)
-// {
-//     registerFile.insert(make_pair("$zero", make_pair(0, 0)));
-//     registerFile.insert(make_pair("$at", make_pair(1, 0)));
-//     registerFile.insert(make_pair("$v0", make_pair(2, 0)));
-//     registerFile.insert(make_pair("$v1", make_pair(3, 0)));
-//     registerFile.insert(make_pair("$a0", make_pair(4, 0)));
-//     registerFile.insert(make_pair("$a1", make_pair(5, 0)));
-//     registerFile.insert(make_pair("$a2", make_pair(6, 0)));
-//     registerFile.insert(make_pair("$a3", make_pair(7, 0)));
-//     registerFile.insert(make_pair("$t0", make_pair(8, 0)));
-//     registerFile.insert(make_pair("$t1", make_pair(9, 0)));
-//     registerFile.insert(make_pair("$t2", make_pair(10, 0)));
-//     registerFile.insert(make_pair("$t3", make_pair(11, 0)));
-//     registerFile.insert(make_pair("$t4", make_pair(12, 0)));
-//     registerFile.insert(make_pair("$t5", make_pair(13, 0)));
-//     registerFile.insert(make_pair("$t6", make_pair(14, 0)));
-//     registerFile.insert(make_pair("$t7", make_pair(15, 0)));
-//     registerFile.insert(make_pair("$s0", make_pair(16, 0)));
-//     registerFile.insert(make_pair("$s1", make_pair(17, 0)));
-//     registerFile.insert(make_pair("$s2", make_pair(18, 0)));
-//     registerFile.insert(make_pair("$s3", make_pair(19, 0)));
-//     registerFile.insert(make_pair("$s4", make_pair(20, 0)));
-//     registerFile.insert(make_pair("$s5", make_pair(21, 0)));
-//     registerFile.insert(make_pair("$s6", make_pair(22, 0)));
-//     registerFile.insert(make_pair("$s7", make_pair(23, 0)));
-//     registerFile.insert(make_pair("$t8", make_pair(24, 0)));
-//     registerFile.insert(make_pair("$t9", make_pair(25, 0)));
-//     registerFile.insert(make_pair("$k0", make_pair(26, 0)));
-//     registerFile.insert(make_pair("$k1", make_pair(27, 0)));
-//     registerFile.insert(make_pair("$gp", make_pair(28, 0)));
-//     registerFile.insert(make_pair("$sp", make_pair(29, 0)));
-//     registerFile.insert(make_pair("$fp", make_pair(30, 0)));
-//     registerFile.insert(make_pair("$ra", make_pair(31, 0)));
-// }
