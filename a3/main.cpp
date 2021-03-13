@@ -245,7 +245,15 @@ public:
         if (instruction.find(":") != string::npos)
         {
             // label
-            addofLabels.insert(pair<string, int>(instruction.substr(0, instruction.size() - 1), currInstrId));
+            cout.flush();
+            cout << "PRINTINTG STORED INSTR " << endl;
+            cout << instruction << endl;
+            cout << "PRINTING LOCATION " << endl;
+            cout << currInstrId << endl;
+            cout.flush();
+            addofLabels.insert(pair<string, int>(instruction.substr(0, instruction.size() - 2), currInstrId));
+            cout << "xxxxxxxxxxxxxxxxxxxxxx" << endl;
+            cout << addofLabels.at(instruction.substr(0, instruction.size() - 2)) << endl;
         }
         else
         {
@@ -258,9 +266,24 @@ public:
     }
     int getAddOfLabel(string label)
     {
-        if (addofLabels.find(label) == addofLabels.end())
-            return -1;
-        return addofLabels[label];
+        // if (addofLabels.find(label) == addofLabels.end())
+        //     return -1;
+        cout << label << endl;
+        cout << label.size() << endl;
+
+        cout.flush();
+        cout << "THIS XXXXXXXXXXXXXXXXXXXXXXXxx" << endl;
+        for (auto const &pair : addofLabels)
+        {
+            cout.flush();
+            cout.flush();
+            cout << pair.first << endl;
+            cout.flush();
+            cout.flush();
+            cout << pair.second << endl;
+        }
+        cout << "THIS YYYYYYYYYYYYYYYYYYYY" << endl;
+        return addofLabels.at(label);
     }
     string getCurrInstr(int current)
     {
@@ -380,6 +403,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         string temp = instructionVector[i];
         memory.storeInstr(temp);
     }
+    // return;
     string currentInstr = memory.getCurrInstr(0);
     cout << currentInstr << endl;
     cout.flush();
@@ -470,8 +494,10 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             cout.flush();
             string label = vectReg[0];
             cout.flush();
-            cout << "FUCKK" << label << endl;
-            programCounter = memory.getAddOfLabel(label);
+            cout << label[4] << endl;
+            cout << label.size() << endl;
+
+            programCounter = memory.getAddOfLabel(label.substr(0, label.size() - 1));
             cout << "CHUT" << programCounter << endl;
         }
         else if (vectInstr[0] == "lw")
