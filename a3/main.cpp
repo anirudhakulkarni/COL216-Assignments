@@ -148,7 +148,7 @@ public:
 class MemoryUnit
 {
 private:
-    string *MemArray;
+    string MemArray[1048576];
     //array of string of size 2**20, initialized with empty strings
 
     int currInstrId;
@@ -183,10 +183,11 @@ public:
     int getData(string variable);
     void setDataAdd(int address, int value);
     int getDataAdd(int address);
+    void printMemContent();
 };
 MemoryUnit::MemoryUnit()
 {
-    MemArray = new string[1048576];
+    //MemArray = new string[1048576];
     for (int it = 0; it < 1048576; it++)
         MemArray[it] = "";
     currInstrId = 0;
@@ -196,10 +197,12 @@ MemoryUnit::MemoryUnit()
 
 inline void MemoryUnit::storeInstr(string instruction)
 {
-    MemArray[++currInstrId] = instruction;
     if (instruction.find(",") == std::string::npos)
     {
-        addofLabels[instruction] = currInstrId;
+        addofLabels[instruction] = currInstrId+1;
+    }
+    else{
+        MemArray[++currInstrId] = instruction;
     }
 }
 inline int MemoryUnit::getAddOfLabel(string label)
@@ -234,7 +237,21 @@ inline int MemoryUnit::getDataAdd(int address)
 {
     return valofVars[address];
 }
-
+void MemoryUnit::printMemContent(){
+    int curr_int = 0;
+    if (MemArray[curr_int] == ""){
+        cout << "fault" << endl;
+    }else{
+        cout << "good" << endl;
+    }
+    while(MemArray[curr_int]!=""){
+        cout << "Memory Instruction at Address: " <<curr_int << " is: " << MemArray[curr_int] << endl;
+    }
+    curr_int = 1048576 / 2;
+    while(MemArray[curr_int]!=""){
+        cout << "Memory Instruction at Address: " <<curr_int << " is: " << MemArray[curr_int] << endl;
+    }
+}
 void tokenize(std::string const &str, const char delim,
               std::vector<std::string> &out)
 {
@@ -267,7 +284,7 @@ int getMemAdd(string add, RegisterFile &registerFile)
     size_t end = add.find_first_of(")");
     int sz = end - start - 1;
     string reg = add.substr(start + 1, sz);
-    stringstream ss(add.substr(0, start - 1));
+    stringstream ss(add.substr(0, start));
     int off;
     ss >> off;
     int add_memory = registerFile.get_register_data(reg);
@@ -286,14 +303,14 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
     cout << memory.getCurrInstr(1) << endl;
     while (currentInstr != "")
     {
-        registerFile.set_register_data("$s1", 10);
+        //registerFile.set_register_data("$s1", 10);
         // Assume that instructions are in format instruction_register,_register etc. only 1 space and 1 comma
         std::vector<std::string> vectReg;
         std::vector<std::string> vectInstr;
         filter_instruction(currentInstr, vectReg, vectInstr);
         //vect has only one element, the current instruction
         //vect Reg
-        for (auto reg : vectReg)
+        for (auto &reg : vectReg)
         {
             reg.erase(remove(reg.begin(), reg.end(), ' '), reg.end());
         }
@@ -432,6 +449,7 @@ int main(int argc, char const *argv[])
     // Declarations
     RegisterFile registerFile;
     MemoryUnit memory;
+    memory.printMemContent();
     processInstructions(instructionVector, registerFile, memory);
 
         // registerFile.set_register_data("t0", INT32_MAX + 1);
