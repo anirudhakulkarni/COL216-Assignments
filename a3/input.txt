@@ -1,17 +1,2 @@
 main:
-    ble: $s1 $s2 main
-    fdb
-    join:', '       k
-    sdG l  l   l    l
-    divisibleby
-    bleddv
-    z>V
-    SFNb
-    zg/n
-    fg   jreoyjhs
-    jl rt]jltj[srjpe poyj rtjk rj rt dfmBV / /     ,    4  , ghfg]    
-    j Loop
-Loop:
-    add $s1,$s2,$s3
-    add $s1, $s2
-    0123456789
+    add $s1, $s2, 10

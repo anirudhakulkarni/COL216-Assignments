@@ -66,8 +66,10 @@ private:
     int get_regno(string s)
     {
 
-        if (s == "zero") return 0;
-        else if (s == "at") return 1;
+        if (s == "zero")
+            return 0;
+        else if (s == "at")
+            return 1;
         else if (s[0] == 'v')
         {
             if (s[1] != '1' || s[1] != '0')
@@ -101,12 +103,18 @@ private:
             else
                 return x + 8;
         }
-        else if (s[0] == 'k') return -1;
-        else if (s == "gp") return 28;
-        else if (s == "sp") return 29;
-        else if (s == "fp") return 30;
-        else if (s == "ra") return 31;
-        else return -1;
+        else if (s[0] == 'k')
+            return -1;
+        else if (s == "gp")
+            return 28;
+        else if (s == "sp")
+            return 29;
+        else if (s == "fp")
+            return 30;
+        else if (s == "ra")
+            return 31;
+        else
+            return -1;
     }
 
 public:
@@ -176,9 +184,11 @@ public:
     void setDataAdd(int address, int value);
     int getDataAdd(int address);
 };
-MemoryUnit::MemoryUnit(){
+MemoryUnit::MemoryUnit()
+{
     MemArray = new string[1048576];
-    for (int it = 0; it < 1048576; it++) MemArray[it] = "";
+    for (int it = 0; it < 1048576; it++)
+        MemArray[it] = "";
     currInstrId = 0;
     currVarId = 1048576 / 2;
     partition = 1048576 / 2;
@@ -187,51 +197,63 @@ MemoryUnit::MemoryUnit(){
     valofVars = new map<int, int>();
 }
 
-inline void MemoryUnit::storeInstr(string instruction){
+inline void MemoryUnit::storeInstr(string instruction)
+{
     MemArray[++currInstrId] = instruction;
-    if (instruction.find(",") == std::string::npos){
+    if (instruction.find(",") == std::string::npos)
+    {
         addofLabels[instruction] = currInstrId;
     }
 }
-inline int MemoryUnit::getAddOfLabel(string label){
+inline int MemoryUnit::getAddOfLabel(string label)
+{
     // label is simply a string used to name a location in memory
     //may refer to the location of a data value (variable) or of an instruction
-    if (addofLabels.find(label) == addofLabels.end()) return -1;
+    if (addofLabels.find(label) == addofLabels.end())
+        return -1;
     return addofLabels[label];
 }
-inline string MemoryUnit::getCurrInstr(int current){
+inline string MemoryUnit::getCurrInstr(int current)
+{
     return MemArray[current];
 }
-inline void MemoryUnit::setData(string variable, int value){
-    if (addofVars.find(variable) == addofVars.end()) addofVars[variable] = ++currVarId;
+inline void MemoryUnit::setData(string variable, int value)
+{
+    if (addofVars.find(variable) == addofVars.end())
+        addofVars[variable] = ++currVarId;
     valofVars[addofVars[variable]] = value;
 }
-inline int MemoryUnit::getData(string variable){
-    if (addofVars.find(variable) == addofVars.end()) return -1;
+inline int MemoryUnit::getData(string variable)
+{
+    if (addofVars.find(variable) == addofVars.end())
+        return -1;
     return valofVars[addofVars[variable]];
 }
-inline void MemoryUnit::setDataAdd(int add, int value){
-    valofVars[add+partition] = value;
+inline void MemoryUnit::setDataAdd(int add, int value)
+{
+    valofVars[add + partition] = value;
 }
-inline int MemoryUnit::getDataAdd(int address){
+inline int MemoryUnit::getDataAdd(int address)
+{
     return valofVars[address];
 }
 
 void tokenize(std::string const &str, const char delim,
-            std::vector<std::string> &out)
-    {
-        //splitting string on the basis of delim
-        size_t start;
-        size_t end = 0;
-    
-        while ((start = str.find_first_not_of(delim, end)) != std::string::npos)
-        {
-            end = str.find(delim, start);
-            out.push_back(str.substr(start, end - start));
-        }
-    }
+              std::vector<std::string> &out)
+{
+    //splitting string on the basis of delim
+    size_t start;
+    size_t end = 0;
 
-void filter_instruction(string &currentInstr, std::vector<std::string> vectReg, std::vector<std::string> vectInstr){
+    while ((start = str.find_first_not_of(delim, end)) != std::string::npos)
+    {
+        end = str.find(delim, start);
+        out.push_back(str.substr(start, end - start));
+    }
+}
+
+void filter_instruction(string &currentInstr, std::vector<std::string> vectReg, std::vector<std::string> vectInstr)
+{
     const char delim1 = ',';
     const char delim2 = ' ';
     tokenize(currentInstr, delim1, vectReg);
@@ -241,18 +263,19 @@ void filter_instruction(string &currentInstr, std::vector<std::string> vectReg, 
     vectReg.erase(vectReg.begin());
     vectReg.insert(vectReg.begin(), reg1);
 }
-int getMemAdd(string add, RegisterFile &registerFile){
+int getMemAdd(string add, RegisterFile &registerFile)
+{
 
-        size_t start = add.find_first_of("(");
-        size_t end = add.find_first_of(")");
-        int sz = end - start -1;
-        string reg = add.substr(start+1, sz);
-        stringstream ss(add.substr(0, start-1));
-        int off;
-        ss >> off;
-        int add_memory = registerFile.get_register_data(reg);
-        int final_add = off + add_memory;
-        return final_add;
+    size_t start = add.find_first_of("(");
+    size_t end = add.find_first_of(")");
+    int sz = end - start - 1;
+    string reg = add.substr(start + 1, sz);
+    stringstream ss(add.substr(0, start - 1));
+    int off;
+    ss >> off;
+    int add_memory = registerFile.get_register_data(reg);
+    int final_add = off + add_memory;
+    return final_add;
 }
 void processInstructions(vector<string> instructionVector, RegisterFile &registerFile, MemoryUnit &memory)
 {
@@ -271,7 +294,8 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         filter_instruction(currentInstr, vectReg, vectInstr);
         //vect has only one element, the current instruction
         //vect Reg
-        for(auto reg : vectReg){
+        for (auto reg : vectReg)
+        {
             reg.erase(remove(reg.begin(), reg.end(), ' '), reg.end());
         }
         if (vectInstr[0] == "add")
@@ -336,11 +360,13 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         else if (vectInstr[0] == "lw")
         {
             string Rdest = vectReg[0], mem = vectReg[1];
-            if (mem.find("(") == string::npos || mem.find(")") == string::npos) {
+            if (mem.find("(") == string::npos || mem.find(")") == string::npos)
+            {
                 //Case 1, instruction of the type "sw var_name";
                 registerFile.set_register_data(Rdest, memory.getData(mem));
             }
-            else{
+            else
+            {
                 int mem_add = getMemAdd(mem, registerFile);
                 registerFile.set_register_data(Rdest, memory.getDataAdd(mem_add));
             }
@@ -349,12 +375,14 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         else if (vectInstr[0] == "sw")
         {
             string Rdest = vectReg[0], mem = vectReg[1];
-            if (mem.find("(") == string::npos || mem.find(")") == string::npos) {
+            if (mem.find("(") == string::npos || mem.find(")") == string::npos)
+            {
                 //Case 1, instruction of the type "sw var_name";
 
                 memory.setData(mem, registerFile.get_register_data(Rdest));
             }
-            else{
+            else
+            {
                 //Case 2, instruction of the type "sw offset($Reg)";
                 int mem_add = getMemAdd(mem, registerFile);
                 memory.setDataAdd(mem_add, registerFile.get_register_data(Rdest));
@@ -364,10 +392,10 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         else if (vectInstr[0] == "addi")
         {
             string Rdest = vectReg[0], Rsrc = vectReg[1];
-            int val;
-            stringstream ss(vectReg[2]);
-            val >> ss;
-            registerFile.set_register_data(Rdest, registerFile.get_register_data(Rsrc) + val);
+            // int val;
+            // stringstream ss(vectReg[2]);
+            // val >> ss;
+            registerFile.set_register_data(Rdest, registerFile.get_register_data(Rsrc) + stoi(vectReg[2]));
             programCounter++;
         }
         else
