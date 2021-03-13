@@ -7,9 +7,10 @@
 
 using namespace std;
 template <class T>
-string to_string(T t, ios_base &(*f)(ios_base &))
+string to_string(T t, ios_base &(*f)(ios_base &)) // DONT change its name. will not work.
 {
     // Helper function for printRegisterFile
+    // to_string<long>(integer, hex)
     ostringstream oss;
     oss << f << t;
     return oss.str();
@@ -43,7 +44,6 @@ class RegisterFile
     */
 private:
     int regArray[32];
-
     string regNameArray[32] = {"zero", "at", "v0", "v1", "a0", "a1", "a2", "a3", "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"};
     int get_regno(string s)
     {
@@ -158,13 +158,36 @@ public:
     void printRegisters()
     {
         cout << "Contents of Register file:\n";
-        cout << "Register\tData\n";
-        for (int i = 0; i < 32; i++)
+        for (int i = 0; i < 31; i++)
         {
-            cout << regNameArray[i] << "\t\t" << regArray[i] << endl;
+            cout << "$" << regNameArray[i] << ": " << to_string<long>(regArray[i], hex) << ", ";
         }
+        cout << "$" << regNameArray[31] << ": " << to_string<long>(regArray[31], hex);
     }
 };
+class MemoryArray
+{
+private:
+public:
+    void storeInstr(string instruction)
+    {
+        return;
+    }
+    int getAddOfLabel(string label)
+    {
+        return 0;
+    }
+    string getFirstInstr()
+    {
+        return "Sunny didi";
+    }
+    string getNextInstr(string currentInstr)
+    {
+        // Take care of jump instructions. If current is jump or branch then use map to get address of label and return that instruction. Do appropriately
+        return "Johny bhaiyya";
+    }
+};
+
 vector<string> getInstructions(ifstream &infile)
 {
     vector<string> temp;
@@ -174,6 +197,24 @@ vector<string> getInstructions(ifstream &infile)
         temp.push_back(remove_extra_whitespaces(test2));
     }
     return temp;
+}
+
+void processInstructions(vector<string> instructionVector, RegisterFile &registerFile, MemoryArray &memory)
+{
+    int instructionsSoFar = 1;
+    for (int i = 0; i < instructionVector.size(); i++)
+    {
+        memory.storeInstr(instructionVector[i]);
+    }
+    string currentInstr = memory.getFirstInstr();
+    while (currentInstr != "")
+    {
+        /* PROCESS INSTRUCTION*/
+        cout << "Instruction number executed: " << instructionsSoFar << endl;
+        registerFile.printRegisters();
+        currentInstr = memory.getNextInstr(currentInstr);
+        instructionsSoFar++;
+    }
 }
 
 int main(int argc, char const *argv[])
@@ -189,12 +230,13 @@ int main(int argc, char const *argv[])
         infile.open(argv[1]);
     }
     vector<string> instructionVector = getInstructions(infile);
-
     // Declarations
-    RegisterFile test;
-    test.set_register_data("t0", 14);
-    cout << test.get_register_data("t0") << endl;
-    test.printRegisters();
+    RegisterFile registerFile;
+    MemoryArray memory;
+    processInstructions(instructionVector, registerFile, memory);
+    registerFile.set_register_data("t0", INT32_MAX + 1);
+    cout << registerFile.get_register_data("t0") << endl;
+    registerFile.printRegisters();
 
     return 0;
 }
