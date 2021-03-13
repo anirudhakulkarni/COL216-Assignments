@@ -125,10 +125,10 @@ public:
     }
     int get_register_data(string register_name)
     {
-        if (register_name[0] == '$')
-            return regArray[get_regno(register_name)];
-        else
-            return stoi(register_name);
+        // if (register_name[0] == '$')
+        return regArray[get_regno(register_name)];
+        // else
+        //     return stoi(register_name);
     }
     void set_register_data(string register_name, int data)
     {
@@ -192,9 +192,6 @@ MemoryUnit::MemoryUnit()
     currInstrId = 0;
     currVarId = 1048576 / 2;
     partition = 1048576 / 2;
-    addofLabels = new map<string, int>();
-    addofVars = new map<string, int>();
-    valofVars = new map<int, int>();
 }
 
 inline void MemoryUnit::storeInstr(string instruction)
@@ -286,8 +283,10 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         memory.storeInstr(instructionVector[i]);
     }
     string currentInstr = memory.getCurrInstr(0);
+    cout << memory.getCurrInstr(1) << endl;
     while (currentInstr != "")
     {
+        registerFile.set_register_data("$s1", 10);
         // Assume that instructions are in format instruction_register,_register etc. only 1 space and 1 comma
         std::vector<std::string> vectReg;
         std::vector<std::string> vectInstr;
@@ -434,8 +433,9 @@ int main(int argc, char const *argv[])
     RegisterFile registerFile;
     MemoryUnit memory;
     processInstructions(instructionVector, registerFile, memory);
-    registerFile.set_register_data("t0", INT32_MAX + 1);
-    cout << registerFile.get_register_data("t0") << endl;
+
+        // registerFile.set_register_data("t0", INT32_MAX + 1);
+    // cout << registerFile.get_register_data("t0") << endl;
     registerFile.printRegisters();
 
     return 0;
