@@ -207,8 +207,7 @@ public:
     }
     void set_register_data(string register_name, int data)
     {
-        // BUG : Assumed that $zero register is $ze everywhere due to parsing convinience as len of each register name is 3 example $s1, $t7
-        cout << "register number: " << register_name << " " << data << " " << get_regno(register_name) << endl;
+        // cout << "register number: " << register_name << " " << data << " " << get_regno(register_name) << endl;
         regArray[get_regno(register_name)] = data;
     }
     void printRegisters()
@@ -218,7 +217,7 @@ public:
         {
             cout << regNameArray[i] << ": " << to_string<long>(regArray[i], hex) << ", ";
         }
-        cout << regNameArray[31] << ": " << to_string<long>(regArray[31], hex);
+        cout << regNameArray[31] << ": " << to_string<long>(regArray[31], hex) << endl;
     }
 };
 class MemoryUnit
@@ -245,20 +244,20 @@ public:
         if (instruction.find(":") != string::npos)
         {
             // label
-            cout.flush();
-            cout << "PRINTINTG STORED INSTR " << endl;
-            cout << instruction << endl;
-            cout << "PRINTING LOCATION " << endl;
-            cout << currInstrId << endl;
-            cout.flush();
+            // cout.flush();
+            // cout << "PRINTINTG STORED INSTR " << endl;
+            // cout << instruction << endl;
+            // cout << "PRINTING LOCATION " << endl;
+            // cout << currInstrId << endl;
+            // cout.flush();
             addofLabels.insert(pair<string, int>(instruction.substr(0, instruction.size() - 2), currInstrId));
-            cout << "xxxxxxxxxxxxxxxxxxxxxx" << endl;
-            cout << addofLabels.at(instruction.substr(0, instruction.size() - 2)) << endl;
+            // cout << "xxxxxxxxxxxxxxxxxxxxxx" << endl;
+            // cout << addofLabels.at(instruction.substr(0, instruction.size() - 2)) << endl;
         }
         else
         {
-            cout << instruction << endl;
-            cout << currInstrId << endl;
+            // cout << instruction << endl;
+            // cout << currInstrId << endl;
             MemArray[currInstrId] = instruction;
 
             currInstrId++;
@@ -268,21 +267,21 @@ public:
     {
         // if (addofLabels.find(label) == addofLabels.end())
         //     return -1;
-        cout << label << endl;
-        cout << label.size() << endl;
+        // cout << label << endl;
+        // cout << label.size() << endl;
 
-        cout.flush();
-        cout << "THIS XXXXXXXXXXXXXXXXXXXXXXXxx" << endl;
-        for (auto const &pair : addofLabels)
-        {
-            cout.flush();
-            cout.flush();
-            cout << pair.first << endl;
-            cout.flush();
-            cout.flush();
-            cout << pair.second << endl;
-        }
-        cout << "THIS YYYYYYYYYYYYYYYYYYYY" << endl;
+        // cout.flush();
+        // cout << "THIS XXXXXXXXXXXXXXXXXXXXXXXxx" << endl;
+        // for (auto const &pair : addofLabels)
+        // {
+        //     cout.flush();
+        //     cout.flush();
+        //     cout << pair.first << endl;
+        //     cout.flush();
+        //     cout.flush();
+        //     cout << pair.second << endl;
+        // }
+        // cout << "THIS YYYYYYYYYYYYYYYYYYYY" << endl;
         return addofLabels.at(label);
     }
     string getCurrInstr(int current)
@@ -371,14 +370,14 @@ void filter_instruction(string &currentInstr, std::vector<std::string> &vectReg,
     // cout << "change---";
     // for (auto x : vectReg) cout << x << "---";
     // cout << endl;
-    for (int i = 0; i < vectReg.size(); i++)
-    {
-        cout << vectReg[i] << endl;
-    }
-    for (int i = 0; i < vectInstr.size(); i++)
-    {
-        cout << vectInstr[i] << endl;
-    }
+    // for (int i = 0; i < vectReg.size(); i++)
+    // {
+    //     cout << vectReg[i] << endl;
+    // }
+    // for (int i = 0; i < vectInstr.size(); i++)
+    // {
+    //     cout << vectInstr[i] << endl;
+    // }
 }
 int getMemAdd(string add, RegisterFile &registerFile)
 {
@@ -396,6 +395,7 @@ int getMemAdd(string add, RegisterFile &registerFile)
 }
 void processInstructions(vector<string> instructionVector, RegisterFile &registerFile, MemoryUnit &memory)
 {
+    int executionOfInstructionCount[999];
     int instructionsSoFar = 1;
     int programCounter = 0;
     for (int i = 0; i < instructionVector.size(); i++)
@@ -405,39 +405,41 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
     }
     // return;
     string currentInstr = memory.getCurrInstr(0);
-    cout << currentInstr << endl;
-    cout.flush();
-    cout << "XXXX";
-    cout << memory.getCurrInstr(1) << endl;
+    // cout << currentInstr << endl;
+    // cout.flush();
+    // cout << "XXXX";
+    // cout << memory.getCurrInstr(1) << endl;
     while (currentInstr != "")
     {
-        cout << currentInstr;
-        cout.flush();
+        // cout << currentInstr;
+        // cout.flush();
+        executionOfInstructionCount[programCounter]++;
+        cout << "==============================================================" << endl;
         cout << "Current Instruction : " << currentInstr << endl;
-        cout << "NOT HERE1\n";
-        cout.flush();
+        // cout << "NOT HERE1\n";
+        // cout.flush();
         vector<string> vectReg;
-        cout << "NOT HERE2\n";
-        cout.flush();
+        // cout << "NOT HERE2\n";
+        // cout.flush();
         vector<string> vectInstr;
-        cout << "NOT HERE3\n";
-        cout.flush();
+        // cout << "NOT HERE3\n";
+        // cout.flush();
         filter_instruction(currentInstr, vectReg, vectInstr);
-        cout << "NOT HERE4" << endl;
+        // cout << "NOT HERE4" << endl;
         for (auto &reg : vectReg)
         {
-            cout << "NOT HERE5" << endl;
+            // cout << "NOT HERE5" << endl;
             reg.erase(remove(reg.begin(), reg.end(), ' '), reg.end());
         }
         if (vectInstr[0] == "add")
         {
-            cout << "MOTHERF" << flush;
+            // cout << "MOTHERF" << flush;
 
             string Rdest = vectReg[0], Rsrc = vectReg[1], Src = vectReg[2];
-            cout << "MOTHERF" << endl;
-            cout << Rdest << Rsrc << Src << endl;
+            // cout << "MOTHERF" << endl;
+            // cout << Rdest << Rsrc << Src << endl;
             int ans = registerFile.get_register_data(Rsrc) + registerFile.get_register_data(Src);
-            cout << "this is shit " << ans;
+            // cout << "this is shit " << ans;
             registerFile.set_register_data(Rdest, ans);
             programCounter++;
         }
@@ -458,7 +460,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             string Rsrc1 = vectReg[0], Src2 = vectReg[1], label = vectReg[2];
             if (registerFile.get_register_data(Rsrc1) == registerFile.get_register_data(Src2))
             {
-                programCounter = memory.getAddOfLabel(label);
+                programCounter = memory.getAddOfLabel(label.substr(0, label.size() - 1));
             }
             else
             {
@@ -470,7 +472,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             string Rsrc1 = vectReg[0], Src2 = vectReg[1], label = vectReg[2];
             if (registerFile.get_register_data(Rsrc1) != registerFile.get_register_data(Src2))
             {
-                programCounter = memory.getAddOfLabel(label);
+                programCounter = memory.getAddOfLabel(label.substr(0, label.size() - 1));
             }
             else
             {
@@ -491,14 +493,14 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         }
         else if (vectInstr[0] == "j")
         {
-            cout.flush();
+            // cout.flush();
             string label = vectReg[0];
-            cout.flush();
-            cout << label[4] << endl;
-            cout << label.size() << endl;
+            // cout.flush();
+            // cout << label[4] << endl;
+            // cout << label.size() << endl;
 
             programCounter = memory.getAddOfLabel(label.substr(0, label.size() - 1));
-            cout << "CHUT" << programCounter << endl;
+            // cout << "HUT" << programCounter << endl;
         }
         else if (vectInstr[0] == "lw")
         {
@@ -539,7 +541,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             // stringstream ss(vectReg[2]);
             // val >> ss;
             int ans = registerFile.get_register_data(Rsrc) + stoi(vectReg[2]);
-            cout << "EXE ADDI: " << ans << endl;
+            // cout << "EXE ADDI: " << ans << endl;
             registerFile.set_register_data(Rdest, ans);
             programCounter++;
         }
@@ -551,6 +553,20 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         registerFile.printRegisters();
         currentInstr = memory.getCurrInstr(programCounter);
         instructionsSoFar++;
+    }
+    cout << "===========================================" << endl;
+    cout << "Program execution completed" << endl;
+    cout << "Total clock cycles consumed: " << instructionsSoFar << endl;
+    cout << "Number of times each instruction was executed: " << endl;
+    int j = 0;
+    for (int i = 0; i < instructionVector.size(); i++)
+    {
+        if (instructionVector[i].find(":") == string::npos)
+        {
+            cout << instructionVector[i] << endl;
+            cout << executionOfInstructionCount[j] << endl;
+            j++;
+        }
     }
 }
 
@@ -579,7 +595,6 @@ int main(int argc, char const *argv[])
     {
         outfile << instructionVector[i] << instructionVector[i].length() << endl;
     }
-    cout << "Printing instruction vector over" << endl;
     // Declarations
     RegisterFile registerFile;
     MemoryUnit memory;

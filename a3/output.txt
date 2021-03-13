@@ -1,7 +1,6 @@
-temp:6
-addi $s1, $s1, 317
+addi $s2, $s2, 1218
 main:6
-j main38
-addi $s1, $s1, 317
-main2:7
+addi $s1, $s1, 117
+bne $s1, $s2, main19
+exit:6
 addi $s1, $s1, 116
