@@ -1,4 +1,6 @@
-add $s1, $s2, 10    1
+   add   $s1, $s2, 10 
 main:
-    add $s1, $s2, 10    2
-    j main
+    add $s1, $s2, 10    
+    j main2
+main2:
+    add $s1, $s2, 10

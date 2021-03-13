@@ -151,66 +151,83 @@ public:
     string MemArray[100];
     int currInstrId = 0;
     int currVarId = 0;
-    int partition = 100/2;
+    int partition = 100 / 2;
     map<string, int> addofLabels;
     map<string, int> addofVars;
     map<int, int> valofVars;
-    MemoryUnit(){
-    for (int it = 0; it < 100; it++)
-        MemArray[it] = "";
-    currInstrId = 0;
-    currVarId = 100 / 2;
-    partition = 100 / 2;
+    MemoryUnit()
+    {
+        for (int it = 0; it < 100; it++)
+            MemArray[it] = "";
+        currInstrId = 0;
+        currVarId = 100 / 2;
+        partition = 100 / 2;
     }
-    void storeInstr(string instruction){
+    void storeInstr(string instruction)
+    {
         if (instruction.find(",") == std::string::npos)
         {
             addofLabels[instruction] = currInstrId;
-            cout << "fsd "<< addofLabels[instruction] << endl;
+            cout << instruction << addofLabels[instruction] << endl;
         }
-        else{
+        else
+        {
             MemArray[currInstrId++] = instruction;
         }
     }
-    int getAddOfLabel(string label){
+    int getAddOfLabel(string label)
+    {
         if (addofLabels.find(label) == addofLabels.end())
             return -1;
         return addofLabels[label];
     }
-    string getCurrInstr(int current){
+    string getCurrInstr(int current)
+    {
         return MemArray[current];
     }
-    void setData(string variable, int value){
-        if (addofVars.find(variable) == addofVars.end()){
+    void setData(string variable, int value)
+    {
+        if (addofVars.find(variable) == addofVars.end())
+        {
             addofVars[variable] = currVarId;
             valofVars[addofVars[variable]] = value;
             currVarId++;
         }
         valofVars[addofVars[variable]] = value;
     }
-    int getData(string variable){
-        if (addofVars.find(variable) == addofVars.end()) return -1;
+    int getData(string variable)
+    {
+        if (addofVars.find(variable) == addofVars.end())
+            return -1;
         return valofVars[addofVars[variable]];
     }
-    void setDataAdd(int address, int value){
+    void setDataAdd(int address, int value)
+    {
         valofVars[address + partition] = value;
     }
-    int getDataAdd(int address){
+    int getDataAdd(int address)
+    {
         return valofVars[address];
     }
-    void printMemContent(){
+    void printMemContent()
+    {
         int curr_int = 0;
-        if (MemArray[curr_int] == ""){
+        if (MemArray[curr_int] == "")
+        {
             cout << "fault" << endl;
-        }else{
+        }
+        else
+        {
             cout << "good" << endl;
         }
-        while(MemArray[curr_int]!=""){
-            cout << "Memory Instruction at Address: " <<curr_int << " is: " << MemArray[curr_int] << endl;
+        while (MemArray[curr_int] != "")
+        {
+            cout << "Memory Instruction at Address: " << curr_int << " is: " << MemArray[curr_int] << endl;
         }
         curr_int = 100 / 2;
-        while(MemArray[curr_int]!=""){
-            cout << "Memory Instruction at Address: " <<curr_int << " is: " << MemArray[curr_int] << endl;
+        while (MemArray[curr_int] != "")
+        {
+            cout << "Memory Instruction at Address: " << curr_int << " is: " << MemArray[curr_int] << endl;
         }
     }
 };
@@ -263,14 +280,16 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         memory.storeInstr(instructionVector[i]);
     }
     string currentInstr = memory.getCurrInstr(0);
-    //cout << memory.getCurrInstr(1) << endl;
+    cout << memory.getCurrInstr(0) << "XXXX" << memory.getCurrInstr(1) << endl;
     while (currentInstr != "")
     {
+        cout << "Current Instruction : " << currentInstr << endl;
         //registerFile.set_register_data("$s1", 10);
         // Assume that instructions are in format instruction_register,_register etc. only 1 space and 1 comma
         std::vector<std::string> vectReg;
         std::vector<std::string> vectInstr;
         filter_instruction(currentInstr, vectReg, vectInstr);
+
         //vect has only one element, the current instruction
         //vect Reg
         for (auto &reg : vectReg)
@@ -412,12 +431,6 @@ int main(int argc, char const *argv[])
     // Declarations
     RegisterFile registerFile;
     MemoryUnit memory;
-    memory.printMemContent();
     processInstructions(instructionVector, registerFile, memory);
-
-        // registerFile.set_register_data("t0", INT32_MAX + 1);
-    // cout << registerFile.get_register_data("t0") << endl;
-    registerFile.printRegisters();
-
     return 0;
 }
