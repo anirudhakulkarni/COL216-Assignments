@@ -1,7 +1,6 @@
 temp:
-add $s1, $s2, 10
+addi $s1, $s2, 3
 main:
-add $s1, $s2, 10
-j main2
+addi $s1, $s1, 2
 main2:
-add $s1, $s2, 10
+addi $s1, $s1, 1
