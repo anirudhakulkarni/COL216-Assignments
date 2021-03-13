@@ -158,6 +158,12 @@ public:
     }
     void set_register_data(string register_name, int data)
     {
+        if (register_name == "$zero")
+        {
+            cout << endl;
+            cout << "$zero can not be set  " << endl;
+            throw exception();
+        }
         // cout << "register number: " << register_name << " " << data << " " << get_regno(register_name) << endl;
         regArray[get_regno(register_name)] = data;
     }
@@ -405,6 +411,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             {
                 registerFile.set_register_data(Rdest, 0);
             }
+            programCounter++;
         }
         else if (parametersVec[0] == "j")
         {
