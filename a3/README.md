@@ -1,5 +1,7 @@
 # Assignment 3:
 
+MAKE SURE TO HAVE \n IN THE END OF THE INPUT
+
 - Pratyush Saini (2019CS10444)
 - Anirudha Kulkarni (2019CS50421)
 

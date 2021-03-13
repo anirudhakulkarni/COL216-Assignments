@@ -1,6 +1,6 @@
-addi $s2, $s2, 1218
-main:6
-addi $s1, $s1, 117
-bne $s1, $s2, main19
-exit:6
-addi $s1, $s1, 116
+addi $s1, $s11, 44
+        lw5 $s0,  1($s0))
+main::
+add $s0,     $s0, $s00          
+        beq $s0, $s1,           main      
+addia $s0, $s0, 11

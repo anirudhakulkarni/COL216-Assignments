@@ -8,13 +8,10 @@
     ios_base::sync_with_stdio(false); \
     cin.tie(NULL);                    \
     cout.tie(NULL)
-
 using namespace std;
 template <class T>
 string to_string(T t, ios_base &(*f)(ios_base &)) // DONT change its name. will not work.
 {
-    // Helper function for printRegisterFile
-    // to_string<long>(integer, hex)
     ostringstream oss;
     oss << f << t;
     return oss.str();
@@ -67,59 +64,7 @@ class RegisterFile
 private:
     int regArray[32];
     string regNameArray[32] = {"$zero", "$at", "$v0", "$v1", "$a0", "$a1", "$a2", "$a3", "$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7", "$s0", "$s1", "$s2", "$s3", "$s4", "$s5", "$s6", "$s7", "$t8", "$t9", "$k0", "$k1", "$gp", "$sp", "$fp", "$ra"};
-    // int get_regno(string s)
-    // {
 
-    //     if (s == "$zero")
-    //         return 0;
-    //     else if (s == "$at")
-    //         return 1;
-    //     else if (s.substr(0, 2) == "$v")
-    //     {
-    //         if (s[2] != '1' || s[2] != '0')
-    //             return -1;
-    //         else
-    //             return s[2] - '0' + 2;
-    //     }
-    //     else if (s.substr(0, 2) == "$a")
-    //     {
-    //         int x = s[2] - '0';
-    //         if (x < 0 || x > 3)
-    //             return -1;
-    //         else
-    //             return x + 4;
-    //     }
-    //     else if (s.substr(0, 2) == "$t")
-    //     {
-    //         int x = s[2] - '0';
-    //         if (x < 0 || x > 9)
-    //             return -1;
-    //         if (x < 8)
-    //             return 8 + x;
-    //         else
-    //             return x + 16;
-    //     }
-    //     else if (s.substr(0, 2) == "$s")
-    //     {
-    //         int x = s[2] - '0';
-    //         if (x < 0 || x > 7)
-    //             return -1;
-    //         else
-    //             return x + 8;
-    //     }
-    //     else if (s.substr(0, 2) == "$k")
-    //         return -1;
-    //     else if (s == "$gp")
-    //         return 28;
-    //     else if (s == "$sp")
-    //         return 29;
-    //     else if (s == "$fp")
-    //         return 30;
-    //     else if (s == "$ra")
-    //         return 31;
-    //     else
-    //         return -1;
-    // }
     int get_regno(string reg)
     {
         // cout << reg << endl;
@@ -189,6 +134,12 @@ private:
         else if (reg.compare("$ra") == 0)
             regno = 31;
         // cout << "=" << regno << endl;
+        if (regno == -1)
+        {
+            cout << endl;
+            cout << "INVALID REGISTER DETECTED!! : " << reg << endl;
+            throw exception();
+        }
         return regno;
     }
 
@@ -223,41 +174,32 @@ public:
 class MemoryUnit
 {
 public:
-    string MemArray[100];
+    string *MemArray = new string[1048576];
+    // string MemArray[100];
     int currInstrId = 0;
     int currVarId = 0;
-    int partition = 100 / 2;
+    int partition = 1048576 / 2;
     map<string, int> addofLabels;
     map<string, int> addofVars;
     map<int, int> valofVars;
     MemoryUnit()
     {
-        for (int it = 0; it < 100; it++)
+        for (int it = 0; it < 1048576; it++)
             MemArray[it] = "";
         currInstrId = 0;
-        currVarId = 100 / 2;
-        partition = 100 / 2;
+        currVarId = 1048576 / 2;
+        partition = 1048576 / 2;
     }
     void storeInstr(string instruction)
     {
 
         if (instruction.find(":") != string::npos)
         {
-            // label
-            // cout.flush();
-            // cout << "PRINTINTG STORED INSTR " << endl;
-            // cout << instruction << endl;
-            // cout << "PRINTING LOCATION " << endl;
-            // cout << currInstrId << endl;
-            // cout.flush();
-            addofLabels.insert(pair<string, int>(instruction.substr(0, instruction.size() - 2), currInstrId));
-            // cout << "xxxxxxxxxxxxxxxxxxxxxx" << endl;
-            // cout << addofLabels.at(instruction.substr(0, instruction.size() - 2)) << endl;
+
+            addofLabels.insert(pair<string, int>(instruction.substr(0, instruction.size() - 1), currInstrId));
         }
         else
         {
-            // cout << instruction << endl;
-            // cout << currInstrId << endl;
             MemArray[currInstrId] = instruction;
 
             currInstrId++;
@@ -265,23 +207,7 @@ public:
     }
     int getAddOfLabel(string label)
     {
-        // if (addofLabels.find(label) == addofLabels.end())
-        //     return -1;
-        // cout << label << endl;
-        // cout << label.size() << endl;
 
-        // cout.flush();
-        // cout << "THIS XXXXXXXXXXXXXXXXXXXXXXXxx" << endl;
-        // for (auto const &pair : addofLabels)
-        // {
-        //     cout.flush();
-        //     cout.flush();
-        //     cout << pair.first << endl;
-        //     cout.flush();
-        //     cout.flush();
-        //     cout << pair.second << endl;
-        // }
-        // cout << "THIS YYYYYYYYYYYYYYYYYYYY" << endl;
         return addofLabels.at(label);
     }
     string getCurrInstr(int current)
@@ -326,7 +252,7 @@ public:
         {
             cout << "Memory Instruction at Address: " << curr_int << " is: " << MemArray[curr_int] << endl;
         }
-        curr_int = 100 / 2;
+        curr_int = 1048576 / 2;
         while (MemArray[curr_int] != "")
         {
             cout << "Memory Instruction at Address: " << curr_int << " is: " << MemArray[curr_int] << endl;
@@ -334,51 +260,6 @@ public:
     }
 };
 
-void tokenize(string str, const char delim,
-              std::vector<std::string> &out)
-{
-    //splitting string on the basis of delim
-    size_t start;
-    size_t end = 0;
-
-    while ((start = str.find_first_not_of(delim, end)) != std::string::npos)
-    {
-        end = str.find(delim, start);
-        out.push_back(str.substr(start, end - start));
-    }
-}
-
-void filter_instruction(string &currentInstr, std::vector<std::string> &vectReg, std::vector<std::string> &vectInstr)
-{
-    const char delim1 = ',';
-    const char delim2 = ' ';
-    tokenize(currentInstr, delim1, vectReg);
-    tokenize(vectReg[0], delim2, vectInstr);
-    string reg1 = vectInstr[1];
-    vectInstr.pop_back();
-    vectReg.erase(vectReg.begin());
-    vectReg.insert(vectReg.begin(), reg1);
-    for (auto &reg : vectReg)
-    {
-        reg.erase(remove(reg.begin(), reg.end(), ' '), reg.end());
-    }
-    for (auto &reg : vectInstr)
-    {
-        reg.erase(remove(reg.begin(), reg.end(), ' '), reg.end());
-    }
-    // for (auto x : vectInstr) cout << x << "---";
-    // cout << "change---";
-    // for (auto x : vectReg) cout << x << "---";
-    // cout << endl;
-    // for (int i = 0; i < vectReg.size(); i++)
-    // {
-    //     cout << vectReg[i] << endl;
-    // }
-    // for (int i = 0; i < vectInstr.size(); i++)
-    // {
-    //     cout << vectInstr[i] << endl;
-    // }
-}
 int getMemAdd(string add, RegisterFile &registerFile)
 {
 
@@ -393,6 +274,52 @@ int getMemAdd(string add, RegisterFile &registerFile)
     int final_add = off + add_memory;
     return final_add;
 }
+vector<string> parseInstr(string instruction)
+{
+    vector<string> ans;
+    while (instruction.length() > 0 && instruction[0] == ' ')
+    {
+        instruction = instruction.substr(1);
+    }
+    while (instruction.length() > 0 && (instruction[instruction.length() - 1] == ' ' || instruction[instruction.length() - 1] == '\n'))
+    {
+        instruction = instruction.substr(0, instruction.length() - 1);
+    }
+    if (instruction[0] == 'j')
+    {
+        ans.push_back("j");
+        instruction = instruction.substr(1);
+        while (instruction.length() > 0 && instruction[0] == ' ')
+        {
+            instruction = instruction.substr(1);
+        }
+        ans.push_back(instruction);
+        return ans;
+    }
+    string instr;
+    while (instruction.length() > 0 && instruction[0] != ' ')
+    {
+        instr += instruction[0];
+        instruction = instruction.substr(1);
+    }
+    string registers = "";
+    for (int i = 0; i < instruction.length(); i++)
+    {
+        if (instruction[i] != ' ')
+        {
+            registers += instruction[i];
+        }
+    }
+    ans.push_back(instr);
+    stringstream ss(registers);
+    while (ss.good())
+    {
+        string substr;
+        getline(ss, substr, ',');
+        ans.push_back(substr);
+    }
+    return ans;
+}
 void processInstructions(vector<string> instructionVector, RegisterFile &registerFile, MemoryUnit &memory)
 {
     int executionOfInstructionCount[999];
@@ -403,12 +330,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         string temp = instructionVector[i];
         memory.storeInstr(temp);
     }
-    // return;
     string currentInstr = memory.getCurrInstr(0);
-    // cout << currentInstr << endl;
-    // cout.flush();
-    // cout << "XXXX";
-    // cout << memory.getCurrInstr(1) << endl;
     while (currentInstr != "")
     {
         // cout << currentInstr;
@@ -416,72 +338,60 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         executionOfInstructionCount[programCounter]++;
         cout << "==============================================================" << endl;
         cout << "Current Instruction : " << currentInstr << endl;
-        // cout << "NOT HERE1\n";
-        // cout.flush();
-        vector<string> vectReg;
-        // cout << "NOT HERE2\n";
-        // cout.flush();
-        vector<string> vectInstr;
-        // cout << "NOT HERE3\n";
-        // cout.flush();
-        filter_instruction(currentInstr, vectReg, vectInstr);
-        // cout << "NOT HERE4" << endl;
-        for (auto &reg : vectReg)
-        {
-            // cout << "NOT HERE5" << endl;
-            reg.erase(remove(reg.begin(), reg.end(), ' '), reg.end());
-        }
-        if (vectInstr[0] == "add")
+        vector<string> parametersVec = parseInstr(currentInstr);
+
+        if (parametersVec[0] == "add")
         {
             // cout << "MOTHERF" << flush;
 
-            string Rdest = vectReg[0], Rsrc = vectReg[1], Src = vectReg[2];
+            string Rdest = parametersVec[1], Rsrc = parametersVec[2], Src = parametersVec[3];
             // cout << "MOTHERF" << endl;
             // cout << Rdest << Rsrc << Src << endl;
             int ans = registerFile.get_register_data(Rsrc) + registerFile.get_register_data(Src);
-            // cout << "this is shit " << ans;
+            // cout << "this is shit " << registerFile.get_register_data(Src);
             registerFile.set_register_data(Rdest, ans);
             programCounter++;
         }
-        else if (vectInstr[0] == "sub")
+        else if (parametersVec[0] == "sub")
         {
-            string Rdest = vectReg[0], Rsrc = vectReg[1], Src = vectReg[2];
+            string Rdest = parametersVec[1], Rsrc = parametersVec[2], Src = parametersVec[3];
             registerFile.set_register_data(Rdest, registerFile.get_register_data(Rsrc) - registerFile.get_register_data(Src));
             programCounter++;
         }
-        else if (vectInstr[0] == "mul")
+        else if (parametersVec[0] == "mul")
         {
-            string Rdest = vectReg[0], Rsrc = vectReg[1], Src = vectReg[2];
+            string Rdest = parametersVec[1], Rsrc = parametersVec[2], Src = parametersVec[3];
             registerFile.set_register_data(Rdest, registerFile.get_register_data(Rsrc) * registerFile.get_register_data(Src));
             programCounter++;
         }
-        else if (vectInstr[0] == "beq")
+        else if (parametersVec[0] == "beq")
         {
-            string Rsrc1 = vectReg[0], Src2 = vectReg[1], label = vectReg[2];
+            string Rsrc1 = parametersVec[1], Src2 = parametersVec[2], label = parametersVec[3];
             if (registerFile.get_register_data(Rsrc1) == registerFile.get_register_data(Src2))
             {
-                programCounter = memory.getAddOfLabel(label.substr(0, label.size() - 1));
+                programCounter = memory.getAddOfLabel(label);
             }
             else
             {
                 programCounter++;
             }
         }
-        else if (vectInstr[0] == "bne")
+        else if (parametersVec[0] == "bne")
         {
-            string Rsrc1 = vectReg[0], Src2 = vectReg[1], label = vectReg[2];
+            string Rsrc1 = parametersVec[1], Src2 = parametersVec[2], label = parametersVec[3];
+
             if (registerFile.get_register_data(Rsrc1) != registerFile.get_register_data(Src2))
             {
-                programCounter = memory.getAddOfLabel(label.substr(0, label.size() - 1));
+                programCounter = memory.getAddOfLabel(label);
             }
             else
             {
                 programCounter++;
             }
         }
-        else if (vectInstr[0] == "slt")
+        else if (parametersVec[0] == "slt")
         {
-            string Rdest = vectReg[0], Rsrc1 = vectReg[1], Src2 = vectReg[2];
+            string Rdest = parametersVec[1], Rsrc1 = parametersVec[2], Src2 = parametersVec[3];
             if (registerFile.get_register_data(Rsrc1) < registerFile.get_register_data(Src2))
             {
                 registerFile.set_register_data(Rdest, 1);
@@ -491,20 +401,17 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
                 registerFile.set_register_data(Rdest, 0);
             }
         }
-        else if (vectInstr[0] == "j")
+        else if (parametersVec[0] == "j")
         {
             // cout.flush();
-            string label = vectReg[0];
-            // cout.flush();
-            // cout << label[4] << endl;
-            // cout << label.size() << endl;
+            string label = parametersVec[1];
 
-            programCounter = memory.getAddOfLabel(label.substr(0, label.size() - 1));
+            programCounter = memory.getAddOfLabel(label);
             // cout << "HUT" << programCounter << endl;
         }
-        else if (vectInstr[0] == "lw")
+        else if (parametersVec[0] == "lw")
         {
-            string Rdest = vectReg[0], mem = vectReg[1];
+            string Rdest = parametersVec[1], mem = parametersVec[2];
             if (mem.find("(") == string::npos || mem.find(")") == string::npos)
             {
                 //Case 1, instruction of the type "sw var_name";
@@ -517,9 +424,9 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             }
             programCounter++;
         }
-        else if (vectInstr[0] == "sw")
+        else if (parametersVec[0] == "sw")
         {
-            string Rdest = vectReg[0], mem = vectReg[1];
+            string Rdest = parametersVec[1], mem = parametersVec[2];
             if (mem.find("(") == string::npos || mem.find(")") == string::npos)
             {
                 //Case 1, instruction of the type "sw var_name";
@@ -534,20 +441,20 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             }
             programCounter++;
         }
-        else if (vectInstr[0] == "addi")
+        else if (parametersVec[0] == "addi")
         {
-            string Rdest = vectReg[0], Rsrc = vectReg[1];
-            // int val;
-            // stringstream ss(vectReg[2]);
-            // val >> ss;
-            int ans = registerFile.get_register_data(Rsrc) + stoi(vectReg[2]);
+            string Rdest = parametersVec[1], Rsrc = parametersVec[2];
+
+            int ans = registerFile.get_register_data(Rsrc) + stoi(parametersVec[3]);
             // cout << "EXE ADDI: " << ans << endl;
             registerFile.set_register_data(Rdest, ans);
             programCounter++;
         }
         else
         {
-            cout << "Raise exception. Unknown instruction found" << endl;
+            cout << endl;
+            cout << "INVALID INSTRUCTION DETECTED!! " << parametersVec[0] << endl;
+            throw exception();
         }
         cout << "Instruction number executed: " << instructionsSoFar << endl;
         registerFile.printRegisters();
@@ -576,6 +483,7 @@ int main(int argc, char const *argv[])
     // Input file section
     fstream infile;
     fstream outfile;
+    outfile.open("../output.txt", ios::out);
     if (argc < 2)
     {
         infile.open("../input.txt", ios::in);
@@ -588,12 +496,12 @@ int main(int argc, char const *argv[])
     string test2;
     while (getline(infile, test2))
     {
-        instructionVector.push_back(test2);
+        instructionVector.push_back(test2.substr(0, test2.length() - 1));
     }
-    outfile.open("../output.txt", ios::out);
+
     for (int i = 0; i < instructionVector.size(); i++)
     {
-        outfile << instructionVector[i] << instructionVector[i].length() << endl;
+        outfile << instructionVector[i] << instructionVector[i][instructionVector[i].length() - 1] << endl;
     }
     // Declarations
     RegisterFile registerFile;
@@ -601,3 +509,49 @@ int main(int argc, char const *argv[])
     processInstructions(instructionVector, registerFile, memory);
     return 0;
 }
+
+// void tokenize(string str, const char delim,
+//               std::vector<std::string> &out)
+// {
+//     //splitting string on the basis of delim
+//     size_t start;
+//     size_t end = 0;
+
+//     while ((start = str.find_first_not_of(delim, end)) != std::string::npos)
+//     {
+//         end = str.find(delim, start);
+//         out.push_back(str.substr(start, end - start));
+//     }
+// }
+
+// void filter_instruction(string currentInstr, std::vector<std::string> &vectReg, std::vector<std::string> &vectInstr)
+// {
+//     const char delim1 = ',';
+//     const char delim2 = ' ';
+//     tokenize(currentInstr, delim1, vectReg);
+//     tokenize(vectReg[0], delim2, vectInstr);
+//     string reg1 = vectInstr[1];
+//     vectInstr.pop_back();
+//     vectReg.erase(vectReg.begin());
+//     vectReg.insert(vectReg.begin(), reg1);
+//     for (auto &reg : vectReg)
+//     {
+//         reg.erase(remove(reg.begin(), reg.end(), ' '), reg.end());
+//     }
+//     for (auto &reg : vectInstr)
+//     {
+//         reg.erase(remove(reg.begin(), reg.end(), ' '), reg.end());
+//     }
+//     // for (auto x : vectInstr) cout << x << "---";
+//     // cout << "change---";
+//     // for (auto x : vectReg) cout << x << "---";
+//     // cout << endl;
+//     // for (int i = 0; i < vectReg.size(); i++)
+//     // {
+//     //     cout << vectReg[i] << endl;
+//     // }
+//     // for (int i = 0; i < vectInstr.size(); i++)
+//     // {
+//     //     cout << vectInstr[i] << endl;
+//     // }
+// }
