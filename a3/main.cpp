@@ -240,7 +240,7 @@ public:
     }
 };
 
-void tokenize(std::string const &str, const char delim,
+void tokenize(string str, const char delim,
               std::vector<std::string> &out)
 {
     //splitting string on the basis of delim
@@ -264,6 +264,16 @@ void filter_instruction(string &currentInstr, std::vector<std::string> vectReg, 
     vectInstr.pop_back();
     vectReg.erase(vectReg.begin());
     vectReg.insert(vectReg.begin(), reg1);
+    for(auto &reg : vectReg){
+            reg.erase(remove(reg.begin(), reg.end(), ' '), reg.end());
+        }
+    for(auto &reg : vectInstr){
+            reg.erase(remove(reg.begin(), reg.end(), ' '), reg.end());
+        }
+    // for (auto x : vectInstr) cout << x << "---";
+    // cout << "change---";
+    // for (auto x : vectReg) cout << x << "---";
+    // cout << endl;
 }
 int getMemAdd(string add, RegisterFile &registerFile)
 {
@@ -295,6 +305,9 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
     cout << memory.getCurrInstr(1) << endl;
     while (currentInstr != "")
     {
+        std::vector<std::string> vectReg;
+        std::vector<std::string> vectInstr;
+        filter_instruction(currentInstr, vectReg, vectInstr);
         cout << currentInstr;
         cout.flush();
         cout << "Current Instruction : " << currentInstr << endl;
