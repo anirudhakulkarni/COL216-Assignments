@@ -9,6 +9,9 @@
     cin.tie(NULL);                    \
     cout.tie(NULL)
 using namespace std;
+int ROW_ACCESS_DELAY = 10;
+int COL_ACCESS_DELAY = 2;
+
 template <class T>
 string to_string(T t, ios_base &(*f)(ios_base &)) // DONT change its name. will not work.
 {
@@ -230,7 +233,7 @@ public:
     {
         return MemArray[current];
     }
-    void setData(string variable, int value)
+    void setDataWVar(string variable, int value)
     {
         if (addofVars.find(variable) == addofVars.end())
         {
@@ -239,7 +242,7 @@ public:
         }
         valofVars[addofVars[variable]] = value;
     }
-    int getData(string variable)
+    int getDataWVar(string variable)
     {
         if (addofVars.find(variable) == addofVars.end())
             return -1;
@@ -247,31 +250,21 @@ public:
     }
     void setDataAdd(int address, int value)
     {
-        valofVars[address + partition] = value;
+        MemArray[address + partition] = to_string(value);
     }
     int getDataAdd(int address)
     {
-        return valofVars[address + partition];
+        return stoi(MemArray[address + partition]);
     }
-    void printMemContent()
+    void printMemData()
     {
-        int curr_int = 0;
-        if (MemArray[curr_int] == "")
+        int curr_int = 1048576 / 2;
+        for (int i = curr_int; i < 1048576; i++)
         {
-            cout << "fault" << endl;
-        }
-        else
-        {
-            cout << "good" << endl;
-        }
-        while (MemArray[curr_int] != "")
-        {
-            cout << "Memory Instruction at Address: " << curr_int << " is: " << MemArray[curr_int] << endl;
-        }
-        curr_int = 1048576 / 2;
-        while (MemArray[curr_int] != "")
-        {
-            cout << "Memory Instruction at Address: " << curr_int << " is: " << MemArray[curr_int] << endl;
+            if (MemArray[i] != "")
+            {
+                cout << i - 1048576 / 2 << "-" << 3 + i - 1048576 / 2 << ": " << MemArray[i] << endl;
+            }
         }
     }
 };
@@ -287,7 +280,7 @@ int getMemAdd(string add, RegisterFile &registerFile)
     int off;
     ss >> off;
     int add_memory = registerFile.get_register_data(reg);
-    int final_add = off + add_memory;
+    int final_add = off / 4 + add_memory;
     return final_add;
 }
 vector<string> parseInstr(string instruction)
@@ -340,7 +333,11 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
 {
     int executionOfInstructionCount[999];
     int instructionsSoFar = 1;
+    int currCycle = 1;
     int programCounter = 0;
+    int activeRowStart = -1024;
+
+    ////////////////////////////////////////
     for (int i = 0; i < instructionVector.size(); i++)
     {
         string temp = instructionVector[i];
@@ -368,6 +365,61 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             registerFile.set_register_data(Rdest, ans);
             programCounter++;
         }
+        else if (parametersVec[0] == "lw")
+        {
+            string Rdest = parametersVec[1], mem = parametersVec[2];
+            if (mem.find("(") == string::npos || mem.find(")") == string::npos)
+            {
+                //Case 1, instruction of the type "lw var_name or address";
+                if (isdigit(mem[0]))
+                {
+                    if (activeRowStart == -1024)
+                    {
+                    }
+                    else
+                    {
+                    }
+                }
+                else
+                {
+                    registerFile.set_register_data(Rdest, memory.getDataWVar(mem));
+                }
+            }
+            else
+            {
+                //Case 2, instruction of the type "lw offset($Reg)";
+                int mem_add = getMemAdd(mem, registerFile);
+                registerFile.set_register_data(Rdest, memory.getDataAdd(mem_add));
+            }
+            programCounter++;
+        }
+        else if (parametersVec[0] == "sw")
+        {
+            string Rdest = parametersVec[1], mem = parametersVec[2];
+            if (mem.find("(") == string::npos || mem.find(")") == string::npos)
+            {
+                //Case 1, instruction of the type "sw var_name";
+
+                memory.setDataWVar(mem, registerFile.get_register_data(Rdest));
+            }
+            else
+            {
+                //Case 2, instruction of the type "sw offset($Reg)";
+                int mem_add = getMemAdd(mem, registerFile);
+                memory.setDataAdd(mem_add, registerFile.get_register_data(Rdest));
+            }
+            programCounter++;
+        }
+        else if (parametersVec[0] == "addi")
+        {
+            string Rdest = parametersVec[1], Rsrc = parametersVec[2];
+
+            int ans = registerFile.get_register_data(Rsrc) + stoi(parametersVec[3]);
+            // cout << "EXE ADDI: " << ans << endl;
+            registerFile.set_register_data(Rdest, ans);
+            programCounter++;
+        }
+        //NOT NEEDED FOR THIS TASK
         else if (parametersVec[0] == "sub")
         {
             string Rdest = parametersVec[1], Rsrc = parametersVec[2], Src = parametersVec[3];
@@ -466,47 +518,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             }
             // cout << "HUT" << programCounter << endl;
         }
-        else if (parametersVec[0] == "lw")
-        {
-            string Rdest = parametersVec[1], mem = parametersVec[2];
-            if (mem.find("(") == string::npos || mem.find(")") == string::npos)
-            {
-                //Case 1, instruction of the type "sw var_name";
-                registerFile.set_register_data(Rdest, memory.getData(mem));
-            }
-            else
-            {
-                int mem_add = getMemAdd(mem, registerFile);
-                registerFile.set_register_data(Rdest, memory.getDataAdd(mem_add));
-            }
-            programCounter++;
-        }
-        else if (parametersVec[0] == "sw")
-        {
-            string Rdest = parametersVec[1], mem = parametersVec[2];
-            if (mem.find("(") == string::npos || mem.find(")") == string::npos)
-            {
-                //Case 1, instruction of the type "sw var_name";
 
-                memory.setData(mem, registerFile.get_register_data(Rdest));
-            }
-            else
-            {
-                //Case 2, instruction of the type "sw offset($Reg)";
-                int mem_add = getMemAdd(mem, registerFile);
-                memory.setDataAdd(mem_add, registerFile.get_register_data(Rdest));
-            }
-            programCounter++;
-        }
-        else if (parametersVec[0] == "addi")
-        {
-            string Rdest = parametersVec[1], Rsrc = parametersVec[2];
-
-            int ans = registerFile.get_register_data(Rsrc) + stoi(parametersVec[3]);
-            // cout << "EXE ADDI: " << ans << endl;
-            registerFile.set_register_data(Rdest, ans);
-            programCounter++;
-        }
         else
         {
             cout << endl;
@@ -517,10 +529,13 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         registerFile.printRegisters();
         currentInstr = memory.getCurrInstr(programCounter);
         instructionsSoFar++;
+        currCycle++;
     }
     cout << "===========================================" << endl;
     cout << "Program execution completed" << endl;
-    cout << "Total clock cycles consumed: " << instructionsSoFar - 1 << endl;
+    cout << "Total clock cycles consumed: " << currCycle - 1 << endl;
+    cout << "===========================================" << endl;
+    memory.printMemData();
     cout << "Number of times each instruction was executed: " << endl;
     int j = 0;
     for (int i = 0; i < instructionVector.size(); i++)
@@ -540,10 +555,10 @@ int main(int argc, char const *argv[])
     // Input file section
     fstream infile;
     fstream outfile;
-    outfile.open("../output.txt", ios::out);
+    outfile.open("../testcases_off/testcase1_out.txt", ios::out);
     if (argc < 2)
     {
-        infile.open("../input.txt", ios::in);
+        infile.open("../testcases_off/testcase1.txt", ios::in);
     }
     else
     {
@@ -566,49 +581,3 @@ int main(int argc, char const *argv[])
     processInstructions(instructionVector, registerFile, memory);
     return 0;
 }
-
-// void tokenize(string str, const char delim,
-//               std::vector<std::string> &out)
-// {
-//     //splitting string on the basis of delim
-//     size_t start;
-//     size_t end = 0;
-
-//     while ((start = str.find_first_not_of(delim, end)) != std::string::npos)
-//     {
-//         end = str.find(delim, start);
-//         out.push_back(str.substr(start, end - start));
-//     }
-// }
-
-// void filter_instruction(string currentInstr, std::vector<std::string> &vectReg, std::vector<std::string> &vectInstr)
-// {
-//     const char delim1 = ',';
-//     const char delim2 = ' ';
-//     tokenize(currentInstr, delim1, vectReg);
-//     tokenize(vectReg[0], delim2, vectInstr);
-//     string reg1 = vectInstr[1];
-//     vectInstr.pop_back();
-//     vectReg.erase(vectReg.begin());
-//     vectReg.insert(vectReg.begin(), reg1);
-//     for (auto &reg : vectReg)
-//     {
-//         reg.erase(remove(reg.begin(), reg.end(), ' '), reg.end());
-//     }
-//     for (auto &reg : vectInstr)
-//     {
-//         reg.erase(remove(reg.begin(), reg.end(), ' '), reg.end());
-//     }
-//     // for (auto x : vectInstr) cout << x << "---";
-//     // cout << "change---";
-//     // for (auto x : vectReg) cout << x << "---";
-//     // cout << endl;
-//     // for (int i = 0; i < vectReg.size(); i++)
-//     // {
-//     //     cout << vectReg[i] << endl;
-//     // }
-//     // for (int i = 0; i < vectInstr.size(); i++)
-//     // {
-//     //     cout << vectInstr[i] << endl;
-//     // }
-// }
