@@ -325,94 +325,125 @@ vector<string> parseInstr(string instruction)
     }
     return ans;
 }
-bool isDepedent(string instr1, string instr2)
+bool isDepedent(string instr1, string instr2, int rowRemaining)
 {
     // instr 1 is of lw or sw type which is running in background
     vector<string> instr1parsed = parseInstr(instr1);
     vector<string> instr2parsed = parseInstr(instr2);
     string workingRegister = instr1parsed[1];
-    // if (instr1parsed[0] == "lw")
-    // {
-    if (instr2parsed[0] == "add")
+    if (instr1parsed[0] == "sw")
     {
-        if (workingRegister == instr2parsed[1] || workingRegister == instr2parsed[2] || workingRegister == instr2parsed[3])
+        if (rowRemaining > 0)
         {
+            if (instr2parsed[0] == "add")
+            {
+                if (workingRegister == instr2parsed[1])
+                {
+                    return true;
+                }
+                return false;
+            }
+            if (instr2parsed[0] == "addi")
+            {
+                if (workingRegister == instr2parsed[1])
+                {
+                    return true;
+                }
+                return false;
+            }
+        }
+        else
+        {
+            if (instr2parsed[0] == "add")
+            {
+                if (workingRegister != instr2parsed[1] && workingRegister != instr2parsed[2] && workingRegister != instr2parsed[3])
+                {
+                    return false;
+                }
+                return true;
+            }
+            if (instr2parsed[0] == "addi")
+            {
+                if (workingRegister != instr2parsed[1] && workingRegister != instr2parsed[2])
+                {
+                    return false;
+                }
+                return true;
+            }
             return true;
         }
-        return false;
     }
-    if (instr2parsed[0] == "addi")
+    if (instr1parsed[0] == "lw")
     {
-        if (workingRegister == instr2parsed[1] || workingRegister == instr2parsed[2])
+        if (instr2parsed[0] == "add")
         {
+            if (workingRegister != instr2parsed[1] && workingRegister != instr2parsed[2] && workingRegister != instr2parsed[3])
+            {
+                return false;
+            }
             return true;
         }
-        return false;
+        if (instr2parsed[0] == "addi")
+        {
+            if (workingRegister != instr2parsed[1] && workingRegister != instr2parsed[2])
+            {
+                return false;
+            }
+            return true;
+        }
+        return true;
     }
-    // if (instr2parsed[0] == "sw")
-    // {
-    //     // if (workingRegister == instr2parsed[1])
-    //     // {
-    //     //     return true;
-    //     // }
-    //     return true;
-    // }
     return true;
-    // }
-    // else
-    // {
-    //     if (instr2parsed[0] == "add")
-    //     {
-    //         if (workingRegister == instr2parsed[1] || workingRegister == instr2parsed[2] || workingRegister == instr2parsed[3])
-    //         {
-    //             return true;
-    //         }
-    //         return false;
-    //     }
-    //     if (instr2parsed[0] == "addi")
-    //     {
-    //         if (workingRegister == instr2parsed[1] || workingRegister == instr2parsed[2])
-    //         {
-    //             return true;
-    //         }
-    //         return false;
-    //     }
-    //     if (instr2parsed[0] == "lw")
-    //     {
-
-    //         // if memory address is being used is accessed in instr2
-
-    //         if (instr2parsed[2] == instr1parsed[2])
-    //         {
-    //             return true;
-    //         }
-    //         return false;
-    //     }
-    //     return false;
-    // }
 }
-int getNUpdateWork(int &activeRowStart, int currAdd)
+tuple<int, int, int> getNUpdateWork(int &activeRowStart, int currAdd)
 {
-    int ans = 2 * ROW_ACCESS_DELAY + COL_ACCESS_DELAY;
+    tuple<int, int, int> ans = make_tuple(2 * ROW_ACCESS_DELAY, COL_ACCESS_DELAY, 1);
     if (activeRowStart == -1024)
     {
-        ans = ROW_ACCESS_DELAY + COL_ACCESS_DELAY;
+        ans = make_tuple(ROW_ACCESS_DELAY, COL_ACCESS_DELAY, 1);
     }
     else if (int(currAdd / 1024) * 1024 == activeRowStart)
     {
-        ans = COL_ACCESS_DELAY;
+        ans = make_tuple(0, COL_ACCESS_DELAY, 0);
     }
     activeRowStart = currAdd;
     return ans;
 }
-void printCycles(vector<tuple<string, int, int>> cycles)
+void printCycles(vector<tuple<string, int, int>> &cycles)
 {
     // <cycle data, cycle number, no of cycles required>
-    for (int i = 0; i < cycles.size(); i++)
+    for (int i = cycles.size() - 1; i >= 0; i--)
     {
         if (get<2>(cycles[i]) > 1)
         {
+            cycles.push_back(make_tuple(": Copying buffer to DRAM", max(get<1>(cycles[cycles.size() - 1]) + 1, get<2>(cycles[i]) + get<1>(cycles[i])), ROW_ACCESS_DELAY));
+            break;
+        }
+    }
+
+    for (int i = 0; i < cycles.size(); i++)
+    {
+        if (i == cycles.size() - 1)
+        {
             cout << "cycle " + to_string(get<1>(cycles[i])) + "-" + to_string(get<2>(cycles[i]) + get<1>(cycles[i]) - 1) + get<0>(cycles[i]) << endl;
+        }
+        if (get<2>(cycles[i]) > 1)
+        {
+            if (get<2>(cycles[i]) == 2 * ROW_ACCESS_DELAY + COL_ACCESS_DELAY)
+            {
+                cout << "cycle " + to_string(get<1>(cycles[i])) + "-" + to_string(get<1>(cycles[i]) + ROW_ACCESS_DELAY - 1) + get<0>(cycles[i]) + " : Copying back ROW BUFFER to DRAM" << endl;
+                cout << "cycle " + to_string(get<1>(cycles[i]) + ROW_ACCESS_DELAY) + "-" + to_string(get<1>(cycles[i]) + 2 * ROW_ACCESS_DELAY - 1) + get<0>(cycles[i]) + " : Copying row from DRAM to ROW BUFFER" << endl;
+                cout << "cycle " + to_string(get<1>(cycles[i]) + 2 * ROW_ACCESS_DELAY) + "-" + to_string(get<2>(cycles[i]) + get<1>(cycles[i]) - 1) + get<0>(cycles[i]) + " : col access in ROW BUFFER" << endl;
+            }
+            else if (get<2>(cycles[i]) == ROW_ACCESS_DELAY + COL_ACCESS_DELAY)
+            {
+                cout << "cycle " + to_string(get<1>(cycles[i])) + "-" + to_string(get<1>(cycles[i]) + ROW_ACCESS_DELAY - 1) + get<0>(cycles[i]) + " : Initial Copying row from DRAM to ROW BUFFER" << endl;
+                cout << "cycle " + to_string(get<1>(cycles[i]) + ROW_ACCESS_DELAY) + "-" + to_string(get<2>(cycles[i]) + get<1>(cycles[i]) - 1) + get<0>(cycles[i]) + " : col access in ROW BUFFER" << endl;
+            }
+            else if (get<2>(cycles[i]) == COL_ACCESS_DELAY)
+            { // only accessing buffer
+                cout << "cycle " + to_string(get<1>(cycles[i])) + "-" + to_string(get<2>(cycles[i]) + get<1>(cycles[i]) - 1) + get<0>(cycles[i]) + " : col access in same ROW BUFFER" << endl;
+            }
         }
         else
             cout << "cycle " + to_string(get<1>(cycles[i])) + get<0>(cycles[i]) << endl;
@@ -427,7 +458,10 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
     vector<tuple<string, int, int>> cycles;
     string lastInstruction = "add $t1, 0";
     int currCycle = 0;
-    int spareCycles = 0;
+    int rowBufferUpdate = 0;
+    int rowRemaining = 0;
+    int colRemaining = 0;
+    int spareCycles = rowRemaining + colRemaining;
 
     ////////////////////////////////////////
     for (int i = 0; i < instructionVector.size(); i++)
@@ -438,24 +472,37 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
     string currentInstr = memory.getCurrInstr(0);
     while (currentInstr != "")
     {
-        cout << "spare " << spareCycles << " curr " << currCycle << endl;
+        cout << "Instruction number executed: " << instructionsSoFar << endl;
+
+        cout << "rowBuffer " << rowRemaining << " colBuffer " << colRemaining << " CurrentCycle " << currCycle << endl;
         executionOfInstructionCount[programCounter]++;
         // cout << currentInstr << endl;
 
         vector<string> parametersVec = parseInstr(currentInstr);
         // Last instruction is remaining and blocking
-        if (spareCycles > 0 && isDepedent(lastInstruction, currentInstr))
+        if (spareCycles > 0 && isDepedent(lastInstruction, currentInstr, rowRemaining))
         {
-            cout << "blocking" << endl;
+            cout << lastInstruction;
+            cout << " is blocking " << currentInstr << endl;
             currCycle += spareCycles;
             spareCycles = 0;
+            rowRemaining = 0;
+            colRemaining = 0;
             continue;
         }
         // Last instruction is remaining and chance for improvement
         else if (spareCycles > 0)
         {
-            cout << "improvement" << endl;
+            cout << "Non-blocking Execution" << endl;
             spareCycles--;
+            if (rowRemaining > 0)
+            {
+                rowRemaining--;
+            }
+            else
+            {
+                colRemaining--;
+            }
         }
         //Last instruction is over proceed as normal
         currCycle++;
@@ -486,7 +533,13 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
                 {
                     // this is working case
                     registerFile.set_register_data(Rdest, memory.getDataAdd(stoi(mem)));
-                    spareCycles = getNUpdateWork(activeRowStart, stoi(mem));
+                    auto [r, c, rbf] = getNUpdateWork(activeRowStart, stoi(mem));
+                    rowRemaining = r;
+                    colRemaining = c;
+                    // cout << "INNER row " << rowRemaining << " col " << colRemaining << " curr " << currCycle << endl;
+                    rowBufferUpdate += rbf;
+
+                    spareCycles = rowRemaining + colRemaining;
                     cycles.push_back(make_tuple(": DRAM request issued", currCycle, 1));
                     cycles.push_back(make_tuple(": " + Rdest + " = " + to_string(memory.getDataAdd(stoi(mem))), currCycle + 1, spareCycles));
                 }
@@ -514,7 +567,13 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
                 {
                     // this is working case
                     memory.setDataAdd(stoi(mem), registerFile.get_register_data(Rdest));
-                    spareCycles = getNUpdateWork(activeRowStart, stoi(mem));
+                    auto [r, c, rbf] = getNUpdateWork(activeRowStart, stoi(mem));
+                    rowRemaining = r;
+                    colRemaining = c;
+                    rowBufferUpdate += rbf;
+                    spareCycles = rowRemaining + colRemaining;
+                    // cout << "INNER row " << rowRemaining << " col " << colRemaining << " curr " << currCycle << endl;
+
                     cycles.push_back(make_tuple(": DRAM request issued", currCycle, 1));
                     cycles.push_back(make_tuple(": memory address " + mem + "-" + to_string(stoi(mem) + 3) + " = " + to_string(registerFile.get_register_data(Rdest)), currCycle + 1, spareCycles));
                 }
@@ -630,7 +689,6 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             throw exception();
         }
 
-        // cout << "Instruction number executed: " << instructionsSoFar << endl;
         // registerFile.printRegisters();
         currentInstr = memory.getCurrInstr(programCounter);
         instructionsSoFar++;
@@ -638,12 +696,13 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
 
     cout << "===========================================" << endl;
     cout << "Program execution completed" << endl;
-    cout << "Total clock cycles consumed: " << currCycle - 1 << endl;
-    cout << "===========================================" << endl;
+    cout << "Printing cycles: " << endl;
     printCycles(cycles);
     cout << "===========================================" << endl;
-
+    cout << "Printing Memory data: " << endl;
     memory.printMemData();
+    cout << "===========================================" << endl;
+    cout << "Total RowBuffer Updates: " << rowBufferUpdate << endl;
     // will not work now
     // cout << "Number of times each instruction was executed: " << endl;
     // int j = 0;

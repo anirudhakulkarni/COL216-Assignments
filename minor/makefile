@@ -8,6 +8,7 @@ BUILD_DIR = ./build
 OUT_DIR = ./outputs
 LIB = pkg-config --cflags --libs
 TESTFILE= ../input.txt
+TESTFILE2= ../input2.txt
 all: clean build run
 clean:
 	@echo Removing old build files :
@@ -21,6 +22,9 @@ build:
 run:
 	@echo Running the executable ...
 	cd $(BUILD_DIR); ./$(TARGET) $(TESTFILE) 10 2
+run2:
+	@echo Running the executable ...
+	cd $(BUILD_DIR); ./$(TARGET) $(TESTFILE2) 10 2
 test:
 	$(CC) $(CPPFLAGS) -o $(BUILD_DIR)/test test.cpp
 	cd $(BUILD_DIR); ./test $(TESTFILE) 10 2
