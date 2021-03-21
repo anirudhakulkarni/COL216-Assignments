@@ -1,12 +1,33 @@
 # Minor
 
-Anirudha Kulkarni
-
-2019CS50421
+**Anirudha Kulkarni**
+**2019CS50421**
 
 #### Input:
 
 MIPS instruction set with add, addi, sw and lw operations
+
+## Approach:
+consider
+```bash
+lw $t1, 1000
+add $t2, $t1, $t2
+```
+In this case we have `lw` which enguages `$t1` in the `COL_ACCESS_DELAY` duration. In `ROW_ACCESS_DELAY` time we will have `ROWBUFFER` copying elements from `DRAM`. So in this duration we can use this register to perform instructions which involve access to that particular register only or any other register for both read and write operations.
+But as nothing was mentioned how many cycles are needed for accessing the data from register we assume it will be only during `COL_ACCESS_DELAY` only as mentioned in assignment statement `Copy the data at the column offset from the row buffer to the REGISTER. Time for this operation: COL_ACCESS_DELAY`.
+Also using the same register in access method does not change the sequential nature of the program. Hence Non-blocking access is possible.
+
+conside
+```bash
+lw $t1, 1000
+add $t2, $t1, $t2
+```
+In this case we have loading the address value to the register. Hence we can not allow parallel execution of any instruction involving that register as its value is going to be changed. Hence only instructions with other registers can be safely allowed to execute.
+
+![](image/readme/1616320418219.png)
+
+
+
 
 ## Reasoning For Approach:
 
@@ -39,12 +60,10 @@ There is scope for optimization by excuting line 3 after line 1 is started to ex
 
 **Hence problem reduces to find next instruction with registers only with no conflict and execute it in parallel**
 
-buffer
 
 ### 3. Copying back buffer:
 
 Row stored in the buffer needs to be copied back to the DRAM after last execution is over
-
 
 ## Testing:
 
@@ -56,7 +75,7 @@ Row stored in the buffer needs to be copied back to the DRAM after last executio
 
    ```
 
-   ![](image/readme/1616306817850.png)
+   ![](image/readme/1616327991458.png)
 2. simlutaneous memory instructions
 
    ```bash
@@ -64,7 +83,7 @@ Row stored in the buffer needs to be copied back to the DRAM after last executio
    lw $t3, 9999
    ``````
 
-   ![](image/readme/1616307089540.png)
+   ![](image/readme/1616327893774.png)
 3. jump at 13th instruction
 
    ```bash
@@ -80,10 +99,11 @@ Row stored in the buffer needs to be copied back to the DRAM after last executio
    add $t3, $t1, $t2
    add $t3, $t1, $t2
    add $t3, $t1, $t2
-
+   add $t3, $t3, $t2
    ```
 
-   ![](image/readme/1616312186822.png)
+   ![](image/readme/1616328153135.png)
+   
 4. nsaf
 
    ```bash
@@ -92,12 +112,13 @@ Row stored in the buffer needs to be copied back to the DRAM after last executio
    add $t3, $t1, $t2
    ```
 
-   ![](image/readme/1616312304600.png)
-
-DRAM memory access one per cycle
-
-* register will be busy for all time. Else it will not be sequential
-
-when to Non-blocking access:
-
-* when next register is not free
+   ![](image/readme/1616328220281.png)
+   
+5.  No sw/lw command: 
+   ```bash
+   add $t3, $t1, $t2
+   ```
+  
+   ![](image/readme/1616328311976.png)
+  
+6. 

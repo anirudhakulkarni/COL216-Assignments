@@ -1,15 +1,1 @@
-main::
-addi $t0, $zero, 11
-addi $t1, $zero, 22
-sw $t0, 10000
-addi $t1, $zero, 22
-addi $t1, $zero, 22
-addi $t0, $zero, 22
-sw $t1, 10244
-lw $t2, 10000
-lw $t3, 10244
-add $t3, $t3, $t22
-sw $t3, 10288
-lw $t2, 10000
-add $t3, $t3, $t22
-exit::
+add $t3, $t1, $t22
