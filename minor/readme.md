@@ -7,6 +7,33 @@
 
 MIPS instruction set with add, addi, sw and lw operations
 
+### Build Instructions:
+
+Program can be run easily with make instructions:
+
+1. To Build: `make build`
+2. To run executable from build `make run`
+3. To remove build file `make clean`
+
+All these steps can be performed by `make all` which will remove previous build, create new one and give output.
+
+Custom `ROW_ACCESS_DELAY` and `COL_ACCESS_DELAY` can be provided by navigating to `build` directory and 
+```bash
+./main ../input.txt 100 45
+```
+which will execute the program with `ROW_ACCESS_DELAY` as 100 and `COL_ACCESS_DELAY` as 45
+Provide input in input.txt or give it as command line argument.
+Defaults used when `make all` is used are:
+```bash
+`ROW_ACCESS_DELAY`: 10
+`COL_ACCESS_DELAY`: 2
+input location : 'input.txt' 
+```
+
+Unoptimised code can be run by:
+```bash
+make unopt
+```
 ## Approach:
 consider
 ```bash
@@ -65,6 +92,12 @@ There is scope for optimization by excuting line 3 after line 1 is started to ex
 
 Row stored in the buffer needs to be copied back to the DRAM after last execution is over
 
+## Assumptions:
+1. Registers are accessed only during `COL_ACCESS_DELAY` duration
+2. `ROW_ACCESS_DELAY` > `COL_ACCESS_DELAY` and both are non zero
+3. Instructions dont consume cycle to be accessed from memory
+4. Maximum instructions and data values are 2**19 so that overall memory will not exceed 2 **20 
+
 ## Testing:
 
 1. Parallel execution possible
@@ -84,7 +117,8 @@ Row stored in the buffer needs to be copied back to the DRAM after last executio
    ``````
 
    ![](image/readme/1616327893774.png)
-3. jump at 13th instruction
+3. jump at 13th instruction due to bllocking by reading of register.
+Also consumes 25 cycles even though large number of instructions are present due to Non-blocking access to next instructions.
 
    ```bash
    sw $t1, 1024
@@ -104,7 +138,7 @@ Row stored in the buffer needs to be copied back to the DRAM after last executio
 
    ![](image/readme/1616328153135.png)
    
-4. nsaf
+4. lw blocks access
 
    ```bash
    lw $t1, 1024
@@ -115,10 +149,29 @@ Row stored in the buffer needs to be copied back to the DRAM after last executio
    ![](image/readme/1616328220281.png)
    
 5.  No sw/lw command: 
+      ```bash
+      add $t3, $t1, $t2
+      ```
+   
+      ![](image/readme/1616331612812.png)
+6. Unoptimised vs optimised
    ```bash
-   add $t3, $t1, $t2
+   main:
+   addi $t0, $zero, 1
+   addi $t1, $zero, 2
+   sw $t0, 1000
+   addi $t1, $zero, 2
+   addi $t1, $zero, 2
+   addi $t0, $zero, 2
+   sw $t1, 1024
+   lw $t2, 1000
+   lw $t3, 1024
+   add $t3, $t3, $t2
+   sw $t3, 1028
+   lw $t2, 1000
+   add $t3, $t3, $t2
+   exit:
    ```
-  
-   ![](image/readme/1616328311976.png)
-  
-6. 
+   ![](image/readme/1616334629523.png)
+
+   We see that instruction 4 and 5 are executed in cycle 4,5 vs 16,17 in unoptimised code.

@@ -1,1 +1,13 @@
-add $t3, $t1, $t22
+mainn
+addi $s0, $zero, 1000
+addi $s1, $zero, 1022
+addi $t0, $zero,  
+addi $t1, $zero,  
+sw $t0, 0($s00
+sw $t1, 0($s11
+lw $t2, 0($s00
+lw $t3, 0($s11
+add $t3, $t3, $tt
+addi $s2, $zero, 1022
+sw $t3, 0($s22
+exitt

@@ -480,7 +480,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
 
         vector<string> parametersVec = parseInstr(currentInstr);
         // Last instruction is remaining and blocking
-        if (spareCycles > 0 && isDepedent(lastInstruction, currentInstr, rowRemaining))
+        if (spareCycles > 0 && true)
         {
             cout << lastInstruction;
             cout << " is blocking " << currentInstr << endl;
@@ -491,19 +491,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             continue;
         }
         // Last instruction is remaining and chance for improvement
-        else if (spareCycles > 0)
-        {
-            cout << "Non-blocking Execution" << endl;
-            spareCycles--;
-            if (rowRemaining > 0)
-            {
-                rowRemaining--;
-            }
-            else
-            {
-                colRemaining--;
-            }
-        }
+
         //Last instruction is over proceed as normal
         currCycle++;
 
