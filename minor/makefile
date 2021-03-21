@@ -20,7 +20,7 @@ build:
 	
 run:
 	@echo Running the executable ...
-	cd $(BUILD_DIR); ./$(TARGET) $(TESTFILE)
+	cd $(BUILD_DIR); ./$(TARGET) $(TESTFILE) 10 2
 test:
 	$(CC) $(CPPFLAGS) -o $(BUILD_DIR)/test test.cpp
-	cd $(BUILD_DIR); ./test $(TESTFILE)
+	cd $(BUILD_DIR); ./test $(TESTFILE) 10 2

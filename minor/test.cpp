@@ -9,9 +9,11 @@
     cin.tie(NULL);                    \
     cout.tie(NULL)
 using namespace std;
-
+int ROW_ACCESS_DELAY = 10;
+int COL_ACCESS_DELAY = 2;
 vector<string> parseInstr(string instruction)
 {
+    cout << "THIS IS INSIDE" << ROW_ACCESS_DELAY << endl;
     vector<string> ans;
     while (instruction.length() > 0 && instruction[0] == ' ')
     {
@@ -105,8 +107,23 @@ bool isDepedent(string instr1, string instr2)
         return false;
     }
 }
+int getNUpdateWork(int &activeRowStart, int currAdd)
+{
+    int ans = 2 * ROW_ACCESS_DELAY + COL_ACCESS_DELAY;
+    if (activeRowStart == -1024)
+    {
+        ans = ROW_ACCESS_DELAY + COL_ACCESS_DELAY;
+    }
+    else if (int(currAdd / 1024) * 1024 == activeRowStart)
+    {
+        ans = ROW_ACCESS_DELAY + COL_ACCESS_DELAY;
+    }
+    activeRowStart = currAdd;
+    return ans;
+}
 int main(int argc, char const *argv[])
 {
+    ROW_ACCESS_DELAY = strtol(argv[2], NULL, 10);
     cout << isDepedent("sw $t1, 12", "lw $t2, 12") << endl;
     cout << isDepedent("sw $t1, 12", "lw $t2, 120") << endl;
     vector<string> instructionVector = {"sw $t1, 12", "lw $t2, 120"};
@@ -117,13 +134,16 @@ int main(int argc, char const *argv[])
     vector<string> cylcles;
     string pastInstruction = "add $t1, 0";
     int currCycle = 1;
-
+    int spareCycles = 1;
     string currentInstr = instructionVector[0];
-    while (currentInstr != "")
-    {
-        executionOfInstructionCount[programCounter]++;
-        vector<string> parametersVec = parseInstr(currentInstr);
-        if ()
-    }
+
+    cout << getNUpdateWork(activeRowStart, 1000) << endl;
+    cout << getNUpdateWork(activeRowStart, 1024) << endl;
+    cout << getNUpdateWork(activeRowStart, 1028) << endl;
+
+    cout << stoi("1000");
+    cout << argv[1] << argv[2] << endl;
+
+    cout << "OUTSIDE " << ROW_ACCESS_DELAY << endl;
     return 0;
 }

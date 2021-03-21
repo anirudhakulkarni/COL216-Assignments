@@ -47,7 +47,6 @@ vector<string> getInstrucVec(fstream &infile)
     }
     return temp;
 }
-
 class RegisterFile
 {
     /*
@@ -167,7 +166,6 @@ public:
             cout << "$zero can not be set  " << endl;
             throw exception();
         }
-        // cout << "register number: " << register_name << " " << data << " " << get_regno(register_name) << endl;
         regArray[get_regno(register_name)] = data;
     }
     void printRegisters()
@@ -178,11 +176,6 @@ public:
             cout << regNameArray[i] << ": " << to_string<long>(regArray[i], hex) << ", ";
         }
         cout << regNameArray[31] << ": " << to_string<long>(regArray[31], hex) << endl;
-        // for (int i = 0; i < 31; i++)
-        // {
-        //     cout << to_string<long>(regArray[i], hex) << ", ";
-        // }
-        // cout << to_string<long>(regArray[31], hex) << endl;
     }
 };
 class MemoryUnit
@@ -254,7 +247,11 @@ public:
     }
     int getDataAdd(int address)
     {
-        return stoi(MemArray[address + partition]);
+        string temp = MemArray[address + partition];
+        stringstream geek(temp);
+        int ans = 0;
+        geek >> ans;
+        return ans;
     }
     void printMemData()
     {
@@ -268,7 +265,6 @@ public:
         }
     }
 };
-
 int getMemAdd(string add, RegisterFile &registerFile)
 {
 
@@ -329,13 +325,109 @@ vector<string> parseInstr(string instruction)
     }
     return ans;
 }
+bool isDepedent(string instr1, string instr2)
+{
+    // instr 1 is of lw or sw type which is running in background
+    vector<string> instr1parsed = parseInstr(instr1);
+    vector<string> instr2parsed = parseInstr(instr2);
+    string workingRegister = instr1parsed[1];
+    // if (instr1parsed[0] == "lw")
+    // {
+    if (instr2parsed[0] == "add")
+    {
+        if (workingRegister == instr2parsed[1] || workingRegister == instr2parsed[2] || workingRegister == instr2parsed[3])
+        {
+            return true;
+        }
+        return false;
+    }
+    if (instr2parsed[0] == "addi")
+    {
+        if (workingRegister == instr2parsed[1] || workingRegister == instr2parsed[2])
+        {
+            return true;
+        }
+        return false;
+    }
+    // if (instr2parsed[0] == "sw")
+    // {
+    //     // if (workingRegister == instr2parsed[1])
+    //     // {
+    //     //     return true;
+    //     // }
+    //     return true;
+    // }
+    return true;
+    // }
+    // else
+    // {
+    //     if (instr2parsed[0] == "add")
+    //     {
+    //         if (workingRegister == instr2parsed[1] || workingRegister == instr2parsed[2] || workingRegister == instr2parsed[3])
+    //         {
+    //             return true;
+    //         }
+    //         return false;
+    //     }
+    //     if (instr2parsed[0] == "addi")
+    //     {
+    //         if (workingRegister == instr2parsed[1] || workingRegister == instr2parsed[2])
+    //         {
+    //             return true;
+    //         }
+    //         return false;
+    //     }
+    //     if (instr2parsed[0] == "lw")
+    //     {
+
+    //         // if memory address is being used is accessed in instr2
+
+    //         if (instr2parsed[2] == instr1parsed[2])
+    //         {
+    //             return true;
+    //         }
+    //         return false;
+    //     }
+    //     return false;
+    // }
+}
+int getNUpdateWork(int &activeRowStart, int currAdd)
+{
+    int ans = 2 * ROW_ACCESS_DELAY + COL_ACCESS_DELAY;
+    if (activeRowStart == -1024)
+    {
+        ans = ROW_ACCESS_DELAY + COL_ACCESS_DELAY;
+    }
+    else if (int(currAdd / 1024) * 1024 == activeRowStart)
+    {
+        ans = COL_ACCESS_DELAY;
+    }
+    activeRowStart = currAdd;
+    return ans;
+}
+void printCycles(vector<tuple<string, int, int>> cycles)
+{
+    // <cycle data, cycle number, no of cycles required>
+    for (int i = 0; i < cycles.size(); i++)
+    {
+        if (get<2>(cycles[i]) > 1)
+        {
+            cout << "cycle " + to_string(get<1>(cycles[i])) + "-" + to_string(get<2>(cycles[i]) + get<1>(cycles[i]) - 1) + get<0>(cycles[i]) << endl;
+        }
+        else
+            cout << "cycle " + to_string(get<1>(cycles[i])) + get<0>(cycles[i]) << endl;
+    }
+}
 void processInstructions(vector<string> instructionVector, RegisterFile &registerFile, MemoryUnit &memory)
 {
     int executionOfInstructionCount[999];
     int instructionsSoFar = 1;
-    int currCycle = 1;
     int programCounter = 0;
     int activeRowStart = -1024;
+    vector<tuple<string, int, int>> cycles;
+    string lastInstruction = "add $t1, 0";
+    int currCycle = 0;
+    int spareCycles = 0;
 
     ////////////////////////////////////////
     for (int i = 0; i < instructionVector.size(); i++)
@@ -346,24 +438,43 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
     string currentInstr = memory.getCurrInstr(0);
     while (currentInstr != "")
     {
-        // cout << currentInstr;
-        // cout.flush();
+        cout << "spare " << spareCycles << " curr " << currCycle << endl;
         executionOfInstructionCount[programCounter]++;
-        cout << "==============================================================" << endl;
-        cout << "Current Instruction : " << currentInstr << endl;
+        // cout << currentInstr << endl;
+
         vector<string> parametersVec = parseInstr(currentInstr);
+        // Last instruction is remaining and blocking
+        if (spareCycles > 0 && isDepedent(lastInstruction, currentInstr))
+        {
+            cout << "blocking" << endl;
+            currCycle += spareCycles;
+            spareCycles = 0;
+            continue;
+        }
+        // Last instruction is remaining and chance for improvement
+        else if (spareCycles > 0)
+        {
+            cout << "improvement" << endl;
+            spareCycles--;
+        }
+        //Last instruction is over proceed as normal
+        currCycle++;
 
         if (parametersVec[0] == "add")
         {
-            // cout << "MOTHERF" << flush;
-
             string Rdest = parametersVec[1], Rsrc = parametersVec[2], Src = parametersVec[3];
-            // cout << "MOTHERF" << endl;
-            // cout << Rdest << Rsrc << Src << endl;
             int ans = registerFile.get_register_data(Rsrc) + registerFile.get_register_data(Src);
-            // cout << "this is shit " << registerFile.get_register_data(Src);
             registerFile.set_register_data(Rdest, ans);
             programCounter++;
+            cycles.push_back(make_tuple(": " + Rdest + " = " + Rsrc + " + " + Src, currCycle, 1));
+        }
+        else if (parametersVec[0] == "addi")
+        {
+            string Rdest = parametersVec[1], Rsrc = parametersVec[2];
+            int ans = registerFile.get_register_data(Rsrc) + stoi(parametersVec[3]);
+            registerFile.set_register_data(Rdest, ans);
+            programCounter++;
+            cycles.push_back(make_tuple(": " + Rdest + " = " + Rsrc + " + " + parametersVec[3], currCycle, 1));
         }
         else if (parametersVec[0] == "lw")
         {
@@ -373,12 +484,11 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
                 //Case 1, instruction of the type "lw var_name or address";
                 if (isdigit(mem[0]))
                 {
-                    if (activeRowStart == -1024)
-                    {
-                    }
-                    else
-                    {
-                    }
+                    // this is working case
+                    registerFile.set_register_data(Rdest, memory.getDataAdd(stoi(mem)));
+                    spareCycles = getNUpdateWork(activeRowStart, stoi(mem));
+                    cycles.push_back(make_tuple(": DRAM request issued", currCycle, 1));
+                    cycles.push_back(make_tuple(": " + Rdest + " = " + to_string(memory.getDataAdd(stoi(mem))), currCycle + 1, spareCycles));
                 }
                 else
                 {
@@ -392,6 +502,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
                 registerFile.set_register_data(Rdest, memory.getDataAdd(mem_add));
             }
             programCounter++;
+            lastInstruction = currentInstr;
         }
         else if (parametersVec[0] == "sw")
         {
@@ -399,8 +510,18 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             if (mem.find("(") == string::npos || mem.find(")") == string::npos)
             {
                 //Case 1, instruction of the type "sw var_name";
-
-                memory.setDataWVar(mem, registerFile.get_register_data(Rdest));
+                if (isdigit(mem[0]))
+                {
+                    // this is working case
+                    memory.setDataAdd(stoi(mem), registerFile.get_register_data(Rdest));
+                    spareCycles = getNUpdateWork(activeRowStart, stoi(mem));
+                    cycles.push_back(make_tuple(": DRAM request issued", currCycle, 1));
+                    cycles.push_back(make_tuple(": memory address " + mem + "-" + to_string(stoi(mem) + 3) + " = " + to_string(registerFile.get_register_data(Rdest)), currCycle + 1, spareCycles));
+                }
+                else
+                {
+                    memory.setDataWVar(mem, registerFile.get_register_data(Rdest));
+                }
             }
             else
             {
@@ -409,16 +530,9 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
                 memory.setDataAdd(mem_add, registerFile.get_register_data(Rdest));
             }
             programCounter++;
+            lastInstruction = currentInstr;
         }
-        else if (parametersVec[0] == "addi")
-        {
-            string Rdest = parametersVec[1], Rsrc = parametersVec[2];
 
-            int ans = registerFile.get_register_data(Rsrc) + stoi(parametersVec[3]);
-            // cout << "EXE ADDI: " << ans << endl;
-            registerFile.set_register_data(Rdest, ans);
-            programCounter++;
-        }
         //NOT NEEDED FOR THIS TASK
         else if (parametersVec[0] == "sub")
         {
@@ -487,15 +601,6 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             }
             programCounter++;
         }
-
-        // else if (parametersVec[0] == "j")
-        // {
-        //     // cout.flush();
-        //     string label = parametersVec[1];
-
-        //     programCounter = memory.getAddOfLabel(label);
-        //     // cout << "HUT" << programCounter << endl;
-        // }
         else if (parametersVec[0] == "j")
         {
             // cout.flush();
@@ -518,35 +623,39 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             }
             // cout << "HUT" << programCounter << endl;
         }
-
         else
         {
             cout << endl;
             cout << "INVALID INSTRUCTION DETECTED!! " << parametersVec[0] << endl;
             throw exception();
         }
-        cout << "Instruction number executed: " << instructionsSoFar << endl;
-        registerFile.printRegisters();
+
+        // cout << "Instruction number executed: " << instructionsSoFar << endl;
+        // registerFile.printRegisters();
         currentInstr = memory.getCurrInstr(programCounter);
         instructionsSoFar++;
-        currCycle++;
     }
+
     cout << "===========================================" << endl;
     cout << "Program execution completed" << endl;
     cout << "Total clock cycles consumed: " << currCycle - 1 << endl;
     cout << "===========================================" << endl;
+    printCycles(cycles);
+    cout << "===========================================" << endl;
+
     memory.printMemData();
-    cout << "Number of times each instruction was executed: " << endl;
-    int j = 0;
-    for (int i = 0; i < instructionVector.size(); i++)
-    {
-        if (instructionVector[i].find(":") == string::npos)
-        {
-            cout << instructionVector[i] << endl;
-            cout << executionOfInstructionCount[j] << endl;
-            j++;
-        }
-    }
+    // will not work now
+    // cout << "Number of times each instruction was executed: " << endl;
+    // int j = 0;
+    // for (int i = 0; i < instructionVector.size(); i++)
+    // {
+    //     if (instructionVector[i].find(":") == string::npos)
+    //     {
+    //         cout << instructionVector[i] << endl;
+    //         cout << executionOfInstructionCount[j] << endl;
+    //         j++;
+    //     }
+    // }
 }
 
 int main(int argc, char const *argv[])
@@ -576,6 +685,8 @@ int main(int argc, char const *argv[])
         outfile << instructionVector[i] << instructionVector[i][instructionVector[i].length() - 1] << endl;
     }
     // Declarations
+    ROW_ACCESS_DELAY = strtol(argv[2], NULL, 10);
+    COL_ACCESS_DELAY = strtol(argv[3], NULL, 10);
     RegisterFile registerFile;
     MemoryUnit memory;
     processInstructions(instructionVector, registerFile, memory);
