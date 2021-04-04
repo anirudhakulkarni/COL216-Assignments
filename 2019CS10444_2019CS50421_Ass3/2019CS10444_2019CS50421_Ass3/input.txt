@@ -1,0 +1,5 @@
+addi $t2, $t2, 25
+addi $t3, $t3, 30
+add $t4, $t3, $t2
+mul $t5, $t3, $t2
+sub $t6, $t2, $t3

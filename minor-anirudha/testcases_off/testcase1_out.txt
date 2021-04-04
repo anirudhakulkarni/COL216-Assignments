@@ -1,0 +1,6 @@
+addi $t0, $zero,11
+addi $t1, $zero,22
+sw $t1, 20444
+add $t0, $t0, $t11
+lw $t0, 20444
+add $t0, $t0, $t1    

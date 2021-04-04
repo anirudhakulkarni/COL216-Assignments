@@ -96,7 +96,7 @@ Row stored in the buffer needs to be copied back to the DRAM after last executio
 1. Registers are accessed only during `COL_ACCESS_DELAY` duration
 2. `ROW_ACCESS_DELAY` > `COL_ACCESS_DELAY` and both are non zero
 3. Instructions dont consume cycle to be accessed from memory
-4. Maximum instructions and data values are 2**19 so that overall memory will not exceed 2 **20 
+4. Maximum instructions and data values are 2** 19 so that overall memory will not exceed 2 ** 20 
 
 ## Strengths:
 1. Maintains the sequential nature of the program rather than manipulating it via lookaheads.
