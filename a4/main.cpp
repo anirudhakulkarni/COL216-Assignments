@@ -664,29 +664,57 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         {
             string Rdest = parametersVec[1], mem = parametersVec[2];
             if ((rowbuff.row_acc == 0) && (rowbuff.col_acc == 0)){
+                //cout << "Hello1"<< endl;
+                //cout << brk << "sda";
                 print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
             int add = get_address(mem, registerFile, memory);
+            if (mem.find("(") == string::npos || mem.find(")") == string::npos)
+            {
+                    if (add / 1024 != rowbuff.row_no){
+                        print_req();
+                        if (rowbuff.row_no == -1){
+                            rowbuff.UpdateRowBuffer(add / 1024, add %1024, "", false, -1 );
+                            rowbuff.UpdateDelays(row_access_delay, col_access_delay);
+                        }
+                        else{
+                            int curr = rowbuff.row_no;
+                            rowbuff.UpdateRowBuffer(add / 1024, add %1024, "", false, curr );
+                            rowbuff.UpdateDelays(2 * row_access_delay, col_access_delay);
+                        }
+                    }
+                    else{
+                        //COLUMN
+                        print_req();
+                        rowbuff.UpdateRowBuffer(rowbuff.row_no, add %1024, "", false, -1 );
+                        rowbuff.UpdateDelays(0, col_access_delay);
+                    }
+            }
+            else
+            {
+                string reg = getMemAdd(mem, registerFile).second;
+                if (add / 1024 != rowbuff.row_no){
+                    print_req();
+                        if (rowbuff.row_no == -1){
+                            //cout << "Hello7"<< endl;
+                            rowbuff.UpdateRowBuffer(add / 1024, add %1024, reg, false, -1 );
+                            rowbuff.UpdateDelays(row_access_delay, col_access_delay);
+                        }
+                        else{
+                            //cout << "Hello8"<< endl;
+                            int curr = rowbuff.row_no;
+                            rowbuff.UpdateRowBuffer(add / 1024, add %1024, reg, false, curr );
+                            rowbuff.UpdateDelays(2 * row_access_delay, col_access_delay);
+                        }
+                    }
+                    else{
+                        //COLUMN
+                        print_req();
+                        rowbuff.UpdateRowBuffer(rowbuff.row_no, add %1024, reg, false, -1);
+                        rowbuff.UpdateDelays(0, col_access_delay);
+                    }
+            }
             memory.setDataAdd(add, registerFile.get_register_data(Rdest));
-            if (add / 1024 != rowbuff.row_no){
-            print_req();
-            if (rowbuff.row_no == -1){
-                rowbuff.UpdateRowBuffer(add / 1024, add %1024, Rdest, false, -1 );
-                rowbuff.UpdateDelays(row_access_delay, col_access_delay);
-            }
-            else{
-                //cout << "Hello3"<< endl;
-                int curr = rowbuff.row_no;
-                rowbuff.UpdateRowBuffer(add / 1024, add %1024, Rdest, false, curr );
-                rowbuff.UpdateDelays(2 * row_access_delay, col_access_delay);
-                }
-            }
-            else{
-                //COLUMN
-                print_req();
-                rowbuff.UpdateRowBuffer(rowbuff.row_no, add %1024, Rdest, false, -1 );
-                rowbuff.UpdateDelays(0, col_access_delay);
-            }
             programCounter++;
             msg_sw(Rdest, rowbuff, memory);
             }
