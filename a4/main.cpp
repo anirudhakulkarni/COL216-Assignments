@@ -452,7 +452,7 @@ int get_address(string mem, RegisterFile registerFile, MemoryUnit memory){
 void helper(int x, int r[], int m[], queue<string> &ans, vector<bool> &b, vector<string> vec, RegisterFile registerFile, MemoryUnit memory){
     for(int i = 0; i< vec.size(); i++){
         if (((get_address (parseInstr(vec[i])[2], registerFile, memory)) / 1024 == x) && (b[i] == false)){
-            if (parseInstr(vec[i])[0] == "lw"){
+            if (parseInstr(vec[i])[0] == "sw"){
                 if (r[registerFile.get_regno(parseInstr(vec[i])[1])] == 0){
                     ans.push(vec[i]);
                     b[i] = true;
@@ -477,7 +477,7 @@ queue<string> reorder_instructions(int curr, queue<string> q, RegisterFile regis
     while (!q.empty()){
         string instr = q.front();
         vector<string> parametersVec = parseInstr(instr);
-        if (parametersVec[0] == "lw"){
+        if (parametersVec[0] == "sw"){
             if (register_hold[registerFile.get_regno(parametersVec[1])] == 0){
                 spock[get_address(parametersVec[2], registerFile, memory) / 1024].push(instr);
             }
@@ -485,7 +485,7 @@ queue<string> reorder_instructions(int curr, queue<string> q, RegisterFile regis
                 main.push_back(instr);
                 executed.push_back(false);
             }
-            register_hold[registerFile.get_regno(parametersVec[1])]++;
+            memory_hold[get_address(parametersVec[2], registerFile, memory)]++;  
         }
         else{
             if (memory_hold[get_address(parametersVec[2], registerFile, memory)] == 0){
@@ -495,7 +495,7 @@ queue<string> reorder_instructions(int curr, queue<string> q, RegisterFile regis
                 main.push_back(instr);
                 executed.push_back(false);
             }
-            memory_hold[get_address(parametersVec[2], registerFile, memory)]++;
+            register_hold[registerFile.get_regno(parametersVec[1])]++;
         }
         q.pop();
     }
@@ -525,10 +525,31 @@ queue<string> reorder_instructions(int curr, queue<string> q, RegisterFile regis
         }
         helper(it->first, register_hold, memory_hold, ans, executed, main, registerFile, memory);
     }
+    int cf = 0;
+    for(bool b : executed){
+        (b == true) ? cf++ : cf+=0;
+    }
+    while (cf < main.size()){
     for (int it = 0; it < main.size(); it++){
         if (executed[it] == false){
-            ans.push(main[it]);
+            if (parseInstr(main[it])[0] == "lw"){
+                if (memory_hold[get_address(parseInstr(main[it])[2], registerFile, memory)] == 0){
+                    ans.push(main[it]);
+                    register_hold[registerFile.get_regno(parseInstr(main[it])[1])]--;
+                    executed[it] = true;
+                    cf++;
+                }
+            }
+            else{
+                if (register_hold[registerFile.get_regno(parseInstr(main[it])[1])] == 0){
+                    ans.push(main[it]);
+                    memory_hold[get_address(parseInstr(main[it])[2], registerFile, memory)]--;
+                    executed[it] = true;
+                    cf++;
+                }
+            }
         }
+    }
     }
     return ans;
 }
