@@ -77,6 +77,7 @@ private:
     int regArray[32];
     string regNameArray[32] = {"$zero", "$at", "$v0", "$v1", "$a0", "$a1", "$a2", "$a3", "$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7", "$s0", "$s1", "$s2", "$s3", "$s4", "$s5", "$s6", "$s7", "$t8", "$t9", "$k0", "$k1", "$gp", "$sp", "$fp", "$ra"};
 
+public:    
     int get_regno(string reg)
     {
         // cout << reg << endl;
@@ -155,7 +156,6 @@ private:
         return regno;
     }
 
-public:
     RegisterFile()
     {
         for (int it = 0; it < 32; it++)
@@ -286,9 +286,9 @@ public:
 class RowBuffer
 {
 public:
-    int row_no;
-    int back_no;
-    string reg;
+    int row_no; // current row
+    int back_no; //write back
+    string reg; 
     bool hault;
     int row_acc;
     int col_acc;
@@ -449,6 +449,89 @@ int get_address(string mem, RegisterFile registerFile, MemoryUnit memory){
     }
     else return getMemAdd(mem, registerFile).first;
 }
+void helper(int x, int r[], int m[], queue<string> &ans, vector<bool> &b, vector<string> vec, RegisterFile registerFile, MemoryUnit memory){
+    for(int i = 0; i< vec.size(); i++){
+        if (((get_address (parseInstr(vec[i])[2], registerFile, memory)) / 1024 == x) && (b[i] == false)){
+            if (parseInstr(vec[i])[0] == "lw"){
+                if (r[registerFile.get_regno(parseInstr(vec[i])[1])] == 0){
+                    ans.push(vec[i]);
+                    b[i] = true;
+                }
+            }
+            else{
+                if (m[get_address(parseInstr(vec[i])[2], registerFile, memory)] == 0){
+                    ans.push(vec[i]);
+                    b[i] = true;
+                }
+            }
+        }
+    }
+}
+queue<string> reorder_instructions(int curr, queue<string> q, RegisterFile registerFile, MemoryUnit memory){
+    int register_hold[32] = {0};
+    int memory_hold[1048576 / 2] = {0};
+    vector<string> main;
+    vector<bool> executed;
+    map<int, queue<string>> spock;
+    //vector<string> vec;
+    while (!q.empty()){
+        string instr = q.front();
+        vector<string> parametersVec = parseInstr(instr);
+        if (parametersVec[0] == "lw"){
+            if (register_hold[registerFile.get_regno(parametersVec[1])] == 0){
+                spock[get_address(parametersVec[2], registerFile, memory) / 1024].push(instr);
+            }
+            else {
+                main.push_back(instr);
+                executed.push_back(false);
+            }
+            register_hold[registerFile.get_regno(parametersVec[1])]++;
+        }
+        else{
+            if (memory_hold[get_address(parametersVec[2], registerFile, memory)] == 0){
+                spock[get_address(parametersVec[2], registerFile, memory) / 1024].push(instr);
+            }
+            else {
+                main.push_back(instr);
+                executed.push_back(false);
+            }
+            memory_hold[get_address(parametersVec[2], registerFile, memory)]++;
+        }
+        q.pop();
+    }
+    queue<string> ans;
+    if (spock.find(curr) != spock.end()){
+        while(!spock[curr].empty()){
+            string ins = spock[curr].front();
+            if (parseInstr(ins)[0] == "lw"){
+                register_hold[registerFile.get_regno(parseInstr(ins)[1])]--;
+            }else{
+                memory_hold[get_address(parseInstr(ins)[2], registerFile, memory)]--;
+            }
+            ans.push(ins);
+            spock[curr].pop();
+        }
+        helper(curr, register_hold, memory_hold, ans, executed, main, registerFile, memory);
+    }
+    for (auto it = spock.begin(); it != spock.end(); it++){
+        while(!it->second.empty()){
+            if (parseInstr(it->second.front())[0] == "lw"){
+                register_hold[registerFile.get_regno(parseInstr(it->second.front())[1])]--;
+            }else{
+                memory_hold[get_address(parseInstr(it->second.front())[2], registerFile, memory)]--;
+            }
+            ans.push(it->second.front());
+            it->second.pop();
+        }
+        helper(it->first, register_hold, memory_hold, ans, executed, main, registerFile, memory);
+    }
+    for (int it = 0; it < main.size(); it++){
+        if (executed[it] == false){
+            ans.push(main[it]);
+        }
+    }
+    return ans;
+}
 void processInstructions(vector<string> instructionVector, RegisterFile &registerFile, MemoryUnit &memory, RowBuffer &rowbuff)
 {
     int part = 0;
@@ -529,7 +612,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
                 programCounter++;
             }
             else{
-                    rowbuff.UpdateHault(true);
+                    rowbuff.UpdateHault(true); //complete dram activity
             }
         }
         else if (parametersVec[0] == "mul")
