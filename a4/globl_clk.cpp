@@ -9,12 +9,20 @@ int row_access_delay = 10;
 int col_access_delay = 2;
 int partition = 1048576 / 2;
 int Clock_cycle = 1;
+int clk_glb = 1;
 queue<string> glob;
 int rg_hold[32] = {0};
 int mem_hold[1048576 / 2] = {0};
 map<int, string> clock_instr;
-void lineshow(){
+void print_clk(){
+    //cout << "==============================================================" << endl;
+        //cout << "Current Instruction : " << currentInstr << endl;
+    //cout << "Clock cycle executed: " << Clock_cycle << endl;
+    Clock_cycle++;
+}
+void print_clksd(int j){
     cout << "==============================================================" << endl;
+    cout << "Clock cycle executed: " << j << endl;
 }
 void show(){
     for(int it = 0; it < 32; it++){
@@ -330,14 +338,33 @@ void print_req() {
     //cout << "Clock cycle executed: " << Clock_cycle << endl;
     cout << "DRAM Request Issued" << endl; 
 }
-void print_rl(int r){
-    cout << "Loading Row " << r << " in Row Buffer." << endl;
+void print_rl(int s, int e, int r){
+    for (int j = s; j <= e; j++){
+        print_clksd(j);
+        cout << "Clock cycle executed: " << j << endl;
+        cout << "Loading Row " << r << " in Row Buffer." << endl;
+        if (clock_instr.find(j)!= clock_instr.end()){
+            cout << clock_instr[j] << endl;
+        }
+    }
 }
-void print_wl(int r){
-    cout << "Writing Back Row " << r << " in DRAM from Row Buffer." << endl;
+void print_wl(int s, int e, int r){
+    for (int j = s; j <= e; j++){
+        print_clksd(j);
+        cout << "Writing Back Row " << r << " in DRAM from Row Buffer." << endl;
+        if (clock_instr.find(j)!= clock_instr.end()){
+            cout << clock_instr[j] << endl;
+        }
+    }
 }
-void print_cl(int c){
-    cout << "Accessing Column " << c << " in Row Buffer." << endl;
+void print_cl(int s, int e, int c){
+    for (int j = s; j <= e; j++){
+        print_clksd(j);
+        cout << "Accessing Column " << c << " in Row Buffer." << endl;
+        if (clock_instr.find(j)!= clock_instr.end()){
+            cout << clock_instr[j] << endl;
+        }
+    }
 }
 pair<int, string> getMemAdd(string add, RegisterFile &registerFile)
 {
@@ -431,11 +458,13 @@ void print_currInstr(string s){
 
     cout << "Current Instructiion being executed: " << s << endl;
 }
-void print_clk(){
-    cout << "==============================================================" << endl;
-        //cout << "Current Instruction : " << currentInstr << endl;
-    cout << "Clock cycle executed: " << Clock_cycle << endl;
-    Clock_cycle++;
+void print_rem(int s, int e){
+    for (int j = s; j <= e; j++){
+        print_clksd(j);
+        if (clock_instr.find(j)!= clock_instr.end()){
+            cout << clock_instr[j] << endl;
+        }
+    }
 }
 int get_address(string mem, RegisterFile registerFile, MemoryUnit memory){
     if (mem.find("(") == string::npos || mem.find(")") == string::npos)
@@ -568,38 +597,35 @@ void complete_dram_activity(RowBuffer &rowbuff, queue<string> &q, RegisterFile &
             if (rowbuff.row_no == -1){
                 rowbuff.UpdateRowBuffer(add / 1024, add %1024, -1 );
                 //rowbuff.UpdateDelays(row_access_delay, col_access_delay);
-                cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay-1 << endl;
-                print_rl(add / 1024);
-                Clock_cycle += row_access_delay;
-                lineshow();
-                cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay-1 << endl;
-                print_cl(add % 1024);
-                Clock_cycle += col_access_delay;
+                //cout << "Clock cycles executed: " << clk_glb << "-" << clk_glb + row_access_delay-1 << endl;
+                print_rl(clk_glb, clk_glb+row_access_delay-1, add / 1024);
+                clk_glb += row_access_delay;
+                //cout << "Clock cycles executed: " << clk_glb << "-" << clk_glb + col_access_delay-1 << endl;
+                print_cl(clk_glb, clk_glb+col_access_delay-1, add % 1024);
+                clk_glb += col_access_delay;
             }
             else{
                 //cout << "Hello3"<< endl;
                 int curr = rowbuff.row_no;
                 
                 //rowbuff.UpdateDelays(2 * row_access_delay, col_access_delay);
-                cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay-1 << endl;
-                print_wl(rowbuff.row_no);
-                Clock_cycle += row_access_delay;lineshow();
-                cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay-1 << endl;
-                print_rl(add / 1024);
-                Clock_cycle += row_access_delay;lineshow();
-                cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay-1 << endl;
-                print_cl(add % 1024);
-                Clock_cycle += col_access_delay;
+                //cout << "Clock cycles executed: " << clk_glb << "-" << clk_glb + row_access_delay-1 << endl;
+                print_wl(clk_glb, clk_glb+row_access_delay-1, curr);
+                clk_glb += row_access_delay;
+                print_rl(clk_glb, clk_glb+row_access_delay-1, add / 1024);
+                clk_glb += row_access_delay;
+                //cout << "Clock cycles executed: " << clk_glb << "-" << clk_glb + col_access_delay-1 << endl;
+                print_cl(clk_glb, clk_glb+col_access_delay-1, add % 1024);
+                clk_glb += col_access_delay;
                 rowbuff.UpdateRowBuffer(add / 1024, add %1024, curr );
                 }
             }
             else{
                 //COLUMN
                 rowbuff.UpdateRowBuffer(rowbuff.row_no, add %1024, -1 );
-                //rowbuff.UpdateDelays(0, col_access_delay);lineshow();
-                cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay-1 << endl;
-                print_cl(add % 1024);
-                Clock_cycle += col_access_delay;
+                //rowbuff.UpdateDelays(0, col_access_delay);
+                print_cl(clk_glb, clk_glb+col_access_delay-1, add % 1024);
+                clk_glb += col_access_delay;
             }
             msg_lw(Rdest, rowbuff, reg_fl);
             rg_hold[reg_fl.get_regno(Rdest)]--;
@@ -615,26 +641,23 @@ void complete_dram_activity(RowBuffer &rowbuff, queue<string> &q, RegisterFile &
                         if (rowbuff.row_no == -1){
                             rowbuff.UpdateRowBuffer(add / 1024, add %1024, -1 );
                             //rowbuff.UpdateDelays(row_access_delay, col_access_delay);
-                            cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay-1 << endl;
-                            print_rl(add / 1024);
-                            Clock_cycle += row_access_delay;lineshow();
-                            cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay-1 << endl;
-                            print_cl(add % 1024);
-                            Clock_cycle += col_access_delay;
+                            print_rl(clk_glb, clk_glb+row_access_delay-1, add / 1024);
+                            clk_glb += row_access_delay;
+                            //cout << "Clock cycles executed: " << clk_glb << "-" << clk_glb + col_access_delay-1 << endl;
+                            print_cl(clk_glb, clk_glb+col_access_delay-1, add % 1024);
+                            clk_glb += col_access_delay;
                         }
                         else{
                             int curr = rowbuff.row_no;
                             
                             //rowbuff.UpdateDelays(2 * row_access_delay, col_access_delay);
-                            cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay-1 << endl;
-                            print_wl(rowbuff.row_no);
-                            Clock_cycle += row_access_delay;lineshow();
-                            cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay-1 << endl;
-                            print_rl(add / 1024);
-                            Clock_cycle += row_access_delay;lineshow();
-                            cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay-1 << endl;
-                            print_cl(add % 1024);
-                            Clock_cycle += col_access_delay;
+                            print_wl(clk_glb, clk_glb+row_access_delay-1, curr);
+                            clk_glb += row_access_delay;
+                            print_rl(clk_glb, clk_glb+row_access_delay-1, add / 1024);
+                            clk_glb += row_access_delay;
+                            //cout << "Clock cycles executed: " << clk_glb << "-" << clk_glb + col_access_delay-1 << endl;
+                            print_cl(clk_glb, clk_glb+col_access_delay-1, add % 1024);
+                            clk_glb += col_access_delay;
                             rowbuff.UpdateRowBuffer(add / 1024, add %1024, curr );
                         }
                     }
@@ -643,9 +666,8 @@ void complete_dram_activity(RowBuffer &rowbuff, queue<string> &q, RegisterFile &
                         //print_req();
                         rowbuff.UpdateRowBuffer(rowbuff.row_no, add %1024, -1 );
                         //rowbuff.UpdateDelays(0, col_access_delay);
-                        cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay-1 << endl;
-                        print_cl(add % 1024);
-                        Clock_cycle += col_access_delay;
+                        print_cl(clk_glb, clk_glb+col_access_delay-1, add % 1024);
+                        clk_glb += col_access_delay;
                     }
                     mem_hold[add]--;
             }
@@ -658,26 +680,23 @@ void complete_dram_activity(RowBuffer &rowbuff, queue<string> &q, RegisterFile &
                             //cout << "Hello7"<< endl;
                             rowbuff.UpdateRowBuffer(add / 1024, add %1024, -1 );
                             //rowbuff.UpdateDelays(row_access_delay, col_access_delay);
-                            cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay-1 << endl;
-                            print_rl(add / 1024);
-                            Clock_cycle += row_access_delay;lineshow();
-                            cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay-1 << endl;
-                            print_cl(add % 1024);
-                            Clock_cycle += col_access_delay;
+                            print_rl(clk_glb, clk_glb+row_access_delay-1, add / 1024);
+                            clk_glb += row_access_delay;
+                            //cout << "Clock cycles executed: " << clk_glb << "-" << clk_glb + col_access_delay-1 << endl;
+                            print_cl(clk_glb, clk_glb+col_access_delay-1, add % 1024);
+                            clk_glb += col_access_delay;
                         }
                         else{
                             //cout << "Hello8"<< endl;
                             int curr = rowbuff.row_no;
                             
-                            cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay-1 << endl;
-                            print_wl(rowbuff.row_no);
-                            Clock_cycle += row_access_delay;lineshow();
-                            cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay-1 << endl;
-                            print_rl(add / 1024);
-                            Clock_cycle += row_access_delay;lineshow();
-                            cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay-1 << endl;
-                            print_cl(add % 1024);
-                            Clock_cycle += col_access_delay;
+                            print_wl(clk_glb, clk_glb+row_access_delay-1, curr);
+                            clk_glb += row_access_delay;
+                            print_rl(clk_glb, clk_glb+row_access_delay-1, add / 1024);
+                            clk_glb += row_access_delay;
+                            //cout << "Clock cycles executed: " << clk_glb << "-" << clk_glb + col_access_delay-1 << endl;
+                            print_cl(clk_glb, clk_glb+col_access_delay-1, add % 1024);
+                            clk_glb += col_access_delay;
                             rowbuff.UpdateRowBuffer(add / 1024, add %1024, curr );
                             //rowbuff.UpdateDelays(2 * row_access_delay, col_access_delay);
                         }
@@ -686,9 +705,8 @@ void complete_dram_activity(RowBuffer &rowbuff, queue<string> &q, RegisterFile &
                         //COLUMN
                         //print_req();
                         rowbuff.UpdateRowBuffer(rowbuff.row_no, add %1024, -1);
-                        cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay-1 << endl;
-                        print_cl(add % 1024);
-                        Clock_cycle += col_access_delay;
+                        print_cl(clk_glb, clk_glb+col_access_delay-1, add % 1024);
+                        clk_glb += col_access_delay;
                         //rowbuff.UpdateDelays(0, col_access_delay);
                     }
                     mem_hold[add]--;
@@ -700,6 +718,7 @@ void complete_dram_activity(RowBuffer &rowbuff, queue<string> &q, RegisterFile &
         }
         re.pop();
     }
+    print_rem(clk_glb, Clock_cycle);
 }
 void processInstructions(vector<string> instructionVector, RegisterFile &registerFile, MemoryUnit &memory, RowBuffer &rowbuff)
 {
@@ -722,11 +741,12 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             //Check if Independent
             if (rg_hold[registerFile.get_regno(Rsrc)] == 0 && rg_hold[registerFile.get_regno(Src)] == 0){
                 print_clk();
-                print_currInstr(currentInstr);
+                //print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
                 int ans = registerFile.get_register_data(Rsrc) + registerFile.get_register_data(Src);
                 registerFile.set_register_data(Rdest, ans);
-                cout << "Updated value of " << Rdest << " to "<< ans << '.' << endl;
+                string st = "Current Instruction bring executed: " + currentInstr + "\n" +"Updated value of " + Rdest + " to " + to_string(ans) + '.';
+                clock_instr[Clock_cycle-1] = st;
                 programCounter++;
                 
             }
@@ -741,11 +761,12 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             //Check if Independent
             if (rg_hold[registerFile.get_regno(Rsrc)] == 0 && rg_hold[registerFile.get_regno(Src)] == 0){
                 print_clk();
-                print_currInstr(currentInstr);
+                //print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
                 int ans = registerFile.get_register_data(Rsrc) - registerFile.get_register_data(Src);
                 registerFile.set_register_data(Rdest, ans);
-                cout << "Updated value of " << Rdest << " to "<< ans << '.' << endl;
+                string st = "Current Instruction bring executed: " + currentInstr + "\n" +"Updated value of " + Rdest + " to "+ to_string(ans) + '.';
+                clock_instr[Clock_cycle-1] = st;
                 programCounter++;
                 
             }
@@ -760,11 +781,12 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             //Check if Independent
             if (rg_hold[registerFile.get_regno(Rsrc)] == 0 && rg_hold[registerFile.get_regno(Src)] == 0){
                 print_clk();
-                print_currInstr(currentInstr);
+                //print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
                 int ans = registerFile.get_register_data(Rsrc) * registerFile.get_register_data(Src);
                 registerFile.set_register_data(Rdest, ans);
-                cout << "Updated value of " << Rdest << " to "<< ans << '.' << endl;
+                string st = "Current Instruction bring executed: " + currentInstr + "\n" +"Updated value of " + Rdest + " to "+ to_string(ans) + '.';
+                clock_instr[Clock_cycle-1] = st;
                 programCounter++;
                 
             }
@@ -779,12 +801,13 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             //Check if Independent
             if (rg_hold[registerFile.get_regno(Rsrc1)] == 0 && rg_hold[registerFile.get_regno(Src2)] == 0){
                 print_clk();
-                print_currInstr(currentInstr);
+                //print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
                 if (registerFile.get_register_data(Rsrc1) == registerFile.get_register_data(Src2))
                 {  
                     programCounter = memory.getAddOfLabel(label);
-                    cout << "Jumping to label: " << label << endl;
+                    string st = "Current Instruction bring executed: " + currentInstr + "\n" +"Jumping to label: " + label;
+                    clock_instr[Clock_cycle-1] = st;
                 }
                 else {programCounter++;}
                 
@@ -800,12 +823,13 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             //Check if Independent
             if (rg_hold[registerFile.get_regno(Rsrc1)] == 0 && rg_hold[registerFile.get_regno(Src2)] == 0){
                 print_clk();
-                print_currInstr(currentInstr);
+                //print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
                 if (registerFile.get_register_data(Rsrc1) != registerFile.get_register_data(Src2))
                 {
                     programCounter = memory.getAddOfLabel(label);
-                    cout << "Jumping to label: " << label << endl;
+                    string st = "Current Instruction bring executed: " + currentInstr + "\n" +"Jumping to label: " + label;
+                    clock_instr[Clock_cycle-1] = st;
                 }
                 else
                 {
@@ -823,17 +847,19 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             //Check if Independent
             if (rg_hold[registerFile.get_regno(Rsrc1)] == 0 && rg_hold[registerFile.get_regno(Src2)] == 0){
                 print_clk();
-                print_currInstr(currentInstr);
+                //print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
                 if (registerFile.get_register_data(Rsrc1) < registerFile.get_register_data(Src2))
                 {
                     registerFile.set_register_data(Rdest, 1);
-                    cout << "Updated value of " << Rdest << " to "<< 1 << '.' << endl;
+                    string st = "Current Instruction bring executed: " + currentInstr + "\n" +"Updated value of " + Rdest + " to 1" + '.';
+                clock_instr[Clock_cycle-1] = st;
                 }
                 else
                 {
                     registerFile.set_register_data(Rdest, 0);
-                    cout << "Updated value of " << Rdest << " to "<< 0 << '.' << endl;
+                    string st = "Current Instruction bring executed: " + currentInstr + "\n" +"Updated value of " + Rdest + " to 0" + '.';
+                    clock_instr[Clock_cycle-1] = st;
                 }
                 programCounter++;
             }
@@ -846,7 +872,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         {
             string label = parametersVec[1];
             print_clk();
-            print_currInstr(currentInstr);
+            //print_currInstr(currentInstr);
             executionOfInstructionCount[programCounter]++;
             if (label.find("$") != string::npos){
                 programCounter = getMemAdd(label, registerFile).first;
@@ -856,18 +882,22 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
                 int instr_add; 
                 ss >> instr_add; 
                 programCounter = instr_add;
-                cout << "Jumping to instruction address: " << instr_add << endl;
+                string st =  "Current Instruction bring executed: " + currentInstr + "\n" +"Jumping to instruction address: " + to_string(instr_add);// << endl;
+                clock_instr[Clock_cycle-1] = st;
             }
             else{
                 programCounter = memory.getAddOfLabel(label);
-                cout << "Jumping to label: " << label << endl;
+                string st =  "Current Instruction bring executed: " + currentInstr + "\n" +"Jumping to label: " + label;// << endl;
+                clock_instr[Clock_cycle-1] = st;
             }
         }
         else if (parametersVec[0] == "lw")
         {
             string Rdest = parametersVec[1], mem = parametersVec[2];
             print_clk();
-            print_req();
+            //print_req();
+            string st = "Current Instruction bring executed: " + currentInstr + "\n" +"DRAM Request Issued. ";
+            clock_instr[Clock_cycle-1] = st;
             rg_hold[registerFile.get_regno(Rdest)]++;
             glob.push(currentInstr);
             executionOfInstructionCount[programCounter]++;
@@ -877,6 +907,8 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         {
             string Rdest = parametersVec[1], mem = parametersVec[2];
             print_clk();
+            string st = "Current Instruction bring executed: " + currentInstr + "\n" +"DRAM Request Issued. ";
+            clock_instr[Clock_cycle-1] = st;
             int add = get_address(mem, registerFile, memory);
             executionOfInstructionCount[programCounter]++;
             if (mem.find("(") == string::npos || mem.find(")") == string::npos)
@@ -890,7 +922,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
                 rg_hold[registerFile.get_regno(reg)]++;
             }
             programCounter++;
-            print_req();
+            //print_req();
             glob.push(currentInstr);
         }
         else if (parametersVec[0] == "addi")
@@ -899,11 +931,14 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             //Check if Independent
             if (rg_hold[registerFile.get_regno(Rsrc)] == 0){
                 print_clk();
-                print_currInstr(currentInstr);
+                //print_currInstr(currentInstr);
+                
+                // clock_instr[Clock_cycle-1] = st;
                 executionOfInstructionCount[programCounter]++;
                 int ans = registerFile.get_register_data(Rsrc) + stoi(parametersVec[3]);
                 registerFile.set_register_data(Rdest, ans);
-                cout << "Updated value of " << Rdest << " to "<< ans << '.' << endl;
+                string st = "Current Instruction bring executed: " + currentInstr + "\n" + "Updated Value of " + Rdest + " to " + to_string(ans) + ".";
+                clock_instr[Clock_cycle-1] = st;
                 programCounter++;
             }
             else{
