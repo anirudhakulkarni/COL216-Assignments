@@ -664,6 +664,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         if (parametersVec[0] == "add")
         {
             string Rdest = parametersVec[1], Rsrc = parametersVec[2], Src = parametersVec[3];
+            //Check if Independent
             if (rg_hold[registerFile.get_regno(Rsrc)] == 0 && rg_hold[registerFile.get_regno(Src)] == 0){
                 print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
@@ -680,6 +681,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         else if (parametersVec[0] == "sub")
         {
             string Rdest = parametersVec[1], Rsrc = parametersVec[2], Src = parametersVec[3];
+            //Check if Independent
             if (rg_hold[registerFile.get_regno(Rsrc)] == 0 && rg_hold[registerFile.get_regno(Src)] == 0){
                 print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
@@ -696,6 +698,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         else if (parametersVec[0] == "mul")
         {
             string Rdest = parametersVec[1], Rsrc = parametersVec[2], Src = parametersVec[3];
+            //Check if Independent
             if (rg_hold[registerFile.get_regno(Rsrc)] == 0 && rg_hold[registerFile.get_regno(Src)] == 0){
                 print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
@@ -712,6 +715,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         else if (parametersVec[0] == "beq")
         {
             string Rsrc1 = parametersVec[1], Src2 = parametersVec[2], label = parametersVec[3];
+            //Check if Independent
             if (rg_hold[registerFile.get_regno(Rsrc1)] == 0 && rg_hold[registerFile.get_regno(Src2)] == 0){
                 print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
@@ -730,6 +734,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         else if (parametersVec[0] == "bne")
         {
             string Rsrc1 = parametersVec[1], Src2 = parametersVec[2], label = parametersVec[3];
+            //Check if Independent
             if (rg_hold[registerFile.get_regno(Rsrc1)] == 0 && rg_hold[registerFile.get_regno(Src2)] == 0){
                 print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
@@ -751,6 +756,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         else if (parametersVec[0] == "slt")
         {
             string Rdest = parametersVec[1], Rsrc1 = parametersVec[2], Src2 = parametersVec[3];
+            //Check if Independent
             if (rg_hold[registerFile.get_regno(Rsrc1)] == 0 && rg_hold[registerFile.get_regno(Src2)] == 0){
                 print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
@@ -820,6 +826,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         else if (parametersVec[0] == "addi")
         {
             string Rdest = parametersVec[1], Rsrc = parametersVec[2];
+            //Check if Independent
             if (rg_hold[registerFile.get_regno(Rsrc)] == 0){
                 print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
