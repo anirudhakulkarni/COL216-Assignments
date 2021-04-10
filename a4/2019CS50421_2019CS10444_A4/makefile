@@ -36,3 +36,16 @@ run2:
 	@echo Running the executable ...
 	cd $(BUILD_DIR); ./$(TARGET2) $(TESTFILE)
 
+nba2: clean3 build3 run3
+clean3:
+	@echo Removing old build files :
+	$(RM) -r $(BUILD_DIR)
+build3:
+	@echo Building project :
+	mkdir $(BUILD_DIR)
+	$(CC) $(CPPFLAGS) -o $(BUILD_DIR)/$(TARGET2) ../temp/$(TARGET2).cpp
+	@echo Generated the executable without errors ...
+run3:
+	@echo Running the executable ...
+	cd $(BUILD_DIR); ./$(TARGET2) $(TESTFILE)
+
