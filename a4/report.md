@@ -107,6 +107,9 @@ Both approaches have their own strengths and weaknesses. If we just solve the de
 
 If we fulfill all the requests in the waiting queue, we might need to load/write back rows proportional to the number of times we call the complete_dram_activity function.
 
+# Note:
+When we start fulfilling the DRAM Requests, we first start executing the first queue request unconditionally and then re-order remaining request accordingly.
+
 ## Assumptions:
 
 1. Registers are accessed only during `COL_ACCESS_DELAY` duration
@@ -121,7 +124,7 @@ If we fulfill all the requests in the waiting queue, we might need to load/write
 3. The above approach disallows the possibility of simultaneous “store " operation and
    an arithmetic/logical operation, which avoids collisions.
 4. The algorithm avoids any reordering when given "dependent" instruction hence proving correctness of the algorithm
-
+5. The algorithm is O(n), where we used dynamic programming to establish dependency among multiple lw/sw instructions while re-ordering.
 ## Weakness:
 
 1. If there are consecutive “load” instructions in the file with the same register as
@@ -129,4 +132,7 @@ If we fulfill all the requests in the waiting queue, we might need to load/write
    Similar is the case if there are several consecutive “store” instructions with the same
    memory locations as the destination.
 2. The algorithm necessitates the use of extra space for maintaining the queue data structure hence O(n) in nature.
-3. O(n**2) complexity as we iterate over all possible optimized instructions over all instructions it is inefficient for larger systems with large instruction counts.
+3. We could have implemented an O(n^2) complexity as we iterate over all possible optimized instructions over all instructions. But it is inefficient for larger systems with large instruction counts on the other hand would reduce clock cycles by fair amount.
+4. At each call of function complete_dram_activity, we are fulfilling all the pending DRAM Requests. Rather, a better optimization would be to fulfill only those requests which could resolve dependency of the current instruction. This was not feasible in our design decision due to limit of lookahead possibility.
+
+***Thank You***
