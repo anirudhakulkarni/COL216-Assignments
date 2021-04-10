@@ -56,10 +56,6 @@ make dram
 
 
 
-### 3. Copying back buffer:
-
-Row stored in the buffer needs to be copied back to the DRAM after last execution is over
-
 ## Assumptions:
 
 1. Registers are accessed only during `COL_ACCESS_DELAY` duration

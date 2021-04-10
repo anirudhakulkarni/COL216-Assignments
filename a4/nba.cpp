@@ -169,6 +169,7 @@ public:
         {
             cout << endl;
             cout << "INVALID REGISTER DETECTED!! : " << reg << endl;
+            cout<<"Length: "<<reg.size()<<endl;
             throw exception();
         }
         return regno;
