@@ -129,4 +129,4 @@ If we fulfill all the requests in the waiting queue, we might need to load/write
    Similar is the case if there are several consecutive “store” instructions with the same
    memory locations as the destination.
 2. The algorithm necessitates the use of extra space for maintaining the queue data structure hence O(n) in nature.
-3. As we use
+3. O(n**2) complexity as we iterate over all possible optimized instructions over all instructions it is inefficient for larger systems with large instruction counts.
