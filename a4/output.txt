@@ -1,0 +1,16 @@
+main::
+	addi $s0, $zero, 10000
+	addi $s1, $zero, 25000
+	addi $t0, $zero, 11
+	addi $t1, $zero, 22
+	addi $t2, $zero, 33
+	addi $t3, $zero, 44
+	sw $t0, 0($s0)	#store 1 at location 10000
+	sw $t1, 0($s1)	#store 2 at location 25000
+	sw $t2, 4($s0)	#store 3 at location 10044
+	sw $t3, 4($s1)	#store 4 at location 25044
+	lw $t5, 0($s0))
+	lw $t6, 0($s1))
+	lw $t7, 4($s0))
+	lw $t8, 4($s1))
+exit::

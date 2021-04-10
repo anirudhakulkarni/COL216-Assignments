@@ -3,11 +3,11 @@ CC = g++
 #  -g     - this flag adds debugging information to the executable file
 #  -Wall  - this flag is used to turn on most compiler warnings
 CPPFLAGS  = -g -Wall
-TARGET = nba
+TARGET = nba2
 BUILD_DIR = ./build
 OUT_DIR = ./outputs
 LIB = pkg-config --cflags --libs
-TESTFILE= ../testing/testx.txt
+TESTFILE= ../testing/test_new.txt
 
 all: clean build run
 clean:
