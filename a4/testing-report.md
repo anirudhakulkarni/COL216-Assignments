@@ -2,7 +2,7 @@
 
 #### Strategy:
 
-1.
+1. Drastic reduction in cycles. Contrasting with without optimization (lefyt) (180+10), DRAM reordering (middle) (70), DRAM reordering with Non blocking access (right) (63)
 
 ```bash
 main:
@@ -25,7 +25,7 @@ main:
 ![](image/testing-report/1618064814781.png)
 
 
-2.
+2. Reordering with NBA impact 63+10, 73, 71
 
 ```bash
 addi $t0, $t0, 5000
@@ -39,7 +39,7 @@ add $s2, $s2, $s5
 
 ![](image/testing-report/1618065747684.png)
 
-3.
+3. Accessing non existential values from DRAM memory. Returns garbage values vs 0. 181+10, 91, 84 cylces
 
 ```bash
 main:
@@ -63,7 +63,7 @@ exit:
 
 ![](image/testing-report/1618065584453.png)
 
-4. sd
+4. Intermediate optimizations
 
 ```bash
 addi $t0, $t0, 1000
@@ -79,7 +79,7 @@ add $s0, $s1, $t4
 
 ![](image/testing-report/1618065021128.png)
 
-5. sc
+5. slt instruction optimization
 
 ```bash
 main:
@@ -113,7 +113,7 @@ sumloop:
 
 ![](image/testing-report/1618064255851.png)
 
-6. sd
+6. Jump instruction optimization 
 
 ```bash
 addi $t1, $t1, 5

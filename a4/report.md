@@ -18,13 +18,14 @@ Program can be run easily with make instructions:
 
 All these steps can be performed by `make nba` which will remove previous build, create new one and give output.
 
-Custom `ROW_ACCESS_DELAY` and `COL_ACCESS_DELAY` can be provided by navigating to `build` directory and
+Custom `ROW_ACCESS_DELAY` and `COL_ACCESS_DELAY` can be provided by changing values in 8th line in code
 
 ```bash
-./main ../input.txt 100 45
+int row_access_delay = 10;
+int col_access_delay = 2;
 ```
 
-which will execute the program with `ROW_ACCESS_DELAY` as 100 and `COL_ACCESS_DELAY` as 45
+which will execute the program with `ROW_ACCESS_DELAY` as 10 and `COL_ACCESS_DELAY` as 2
 Provide input in input.txt or give it as command line argument.
 Defaults used when `make all` is used are:
 
@@ -42,7 +43,6 @@ make dram
 
 ## Approach:
 
-
 We used the same DRAM Implementation as In Minor Examination. The Memory block being 2 dimensional 1024 x 1024 sized memory block.
 
 The first half of the DRAM space is reserved for storing instructions from input MIPS assembly file. The next half of the space is reserved for storing data values in Memory (where each data value occupies 4 units of space).
@@ -52,7 +52,6 @@ We redesigned our DRAM implementation to handle the problem of repeatedly writin
 We implemented our idea using a Queue Data Structure.
 
 ### Algorithm:
-
 
 We start executing all the statements sequentially. According to the type of instruction seen:
 
@@ -70,9 +69,9 @@ In our NBA implementation, the execution of the instructions present in the queu
 
 For example there are two instruction present in the waiting queue of DRAM:
 
-				lw $t0, 1000
+			lw $t0, 1000
 
-				sw $t1, 1028
+			sw $t1, 1028
 In our Simple DRAM approach, we would issue two DRAM requests in the first two cycles and then start the loading / storing process from the third cycle.
 
 While in our NBA Implementation, we would rather issue a DRAM request of first instruction and start it’s activity in DRAM from the second cycle. The DRAM request for second instruction is issued in the second cycle and it’s activity starts in DRAM after the activity of first instruction is completed.
@@ -108,7 +107,6 @@ Both approaches have their own strengths and weaknesses. If we just solve the de
 
 If we fulfill all the requests in the waiting queue, we might need to load/write back rows proportional to the number of times we call the complete_dram_activity function.
 
-
 ## Assumptions:
 
 1. Registers are accessed only during `COL_ACCESS_DELAY` duration
@@ -118,14 +116,17 @@ If we fulfill all the requests in the waiting queue, we might need to load/write
 
 ## Strengths:
 
-1. Maintains the sequential nature of the program rather than manipulating it via lookaheads.
-2. Reduced complexity compared with priority queue which requires checking in distinct future values which can invlove lookaheadd of `O(N)` plus backtracking of `O(N)` and hence increase evaluation time in case of larger inputs. Ex: `10 sec` vs `30 sec` for program with `10**10` lines which is order of a general MIPS processor handles.
-3. Modular and easily understandable approach due to Object oriented approach
-4. Debugging friendly approach which makes easier to follow the execution of program as lookahead is `O(ROW_ACCESS_DELAY)`
+1. The DRAM sits idle if and only if there is no independent instruction remaining and that can not be optimized. This improves timing efficiency.
+2. The choice of the data structure is directly motivated by the execution constraints. Queue provides First Come First Serve opportunity. Evidently, the algorithm provides the best possible running time of execution.
+3. The above approach disallows the possibility of simultaneous “store " operation and
+   an arithmetic/logical operation, which avoids collisions.
+4. The algorithm avoids any reordering when given "dependent" instruction hence proving correctness of the algorithm
 
 ## Weakness:
 
-1. In contrast to approach with queue for prioritising request this will not be able to optimise the cycles in the distinct future as notion of lookahead and backtracking was avoided.
-   This can be severe in case of specific operations like `lw $t1, 1000` and high values of `ROW_ACCESS_DELAY`. In such cases we will waste lot of cycles which could have been saved in the future.
-   But such instructions are very specific in occurence.
-2. Object oriented model might take large space even for smaller inputs. All the variables are needed to be initialised and take constant space in contrast to functional approach which creates variables as we need it but looses modularity and order of computations in a MIPS processor is much larger than such case.
+1. If there are consecutive “load” instructions in the file with the same register as
+   destination, a more clever simulator will load once according to the last instruction.
+   Similar is the case if there are several consecutive “store” instructions with the same
+   memory locations as the destination.
+2. The algorithm necessitates the use of extra space for maintaining the queue data structure hence O(n) in nature.
+3. As we use

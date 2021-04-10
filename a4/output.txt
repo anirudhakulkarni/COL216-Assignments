@@ -1,9 +1,8 @@
-addi $t1, $t1, 5
-sw $t1, 2500 ($t0)
-main: 
-    addi $t1, $t1, -1
-    lw $t2, 5000 ($t0)
-    beq $t1, $t0, label
-    j main
-label:
-    add $t0, $t2, $t11
+addi $s0, $s0, 1036
+	addi $t1, $t1, 10
+	sw $t1, 0($s0)
+	addi $s0, $zero, 1000
+	lw $t0, 0($s0)
+	addi $s0, $s0, 4
+	lw $t1, 0($s0)
+	add $t2, $t0, $t11
