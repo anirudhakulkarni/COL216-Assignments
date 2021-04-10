@@ -958,7 +958,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
                 string reg = getMemAdd(mem, registerFile).second;
                 mem_hold[add]++;
                 rg_hold[registerFile.get_regno(reg)]++;
-            }mem_hold[add]++;
+            }
             programCounter++;
             //print_req();
             string st = "Current Instruction being executed: " + currentInstr + "\n" +"DRAM Request Issued. ";
