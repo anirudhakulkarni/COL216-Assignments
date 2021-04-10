@@ -13,11 +13,14 @@ queue<string> glob;
 int rg_hold_lw[32] = {0};
 int rg_hold_sw[32] = {0};
 map<int, string> clock_instr;
-void lineshow(){
+void lineshow()
+{
     cout << "==============================================================" << endl;
 }
-void show(){
-    for(int it = 0; it < 32; it++){
+void show()
+{
+    for (int it = 0; it < 32; it++)
+    {
         cout << rg_hold_sw[it] << " ";
         cout << rg_hold_lw[it] << " ";
     }
@@ -30,17 +33,21 @@ string to_string(T t, ios_base &(*f)(ios_base &)) // DONT change its name. will 
     oss << f << t;
     return oss.str();
 }
-int getIndexofChar(string str, char c){
+int getIndexofChar(string str, char c)
+{
     int a = 0;
-    while (str[a] != c){
+    while (str[a] != c)
+    {
         a++;
     }
     return a;
 }
-int count_wht(string s){
+int count_wht(string s)
+{
     int cnt = 0;
-    for(int it=0; it<s.length(); it++){
-        s[it] == ' ' ? cnt+=1:cnt+=0;
+    for (int it = 0; it < s.length(); it++)
+    {
+        s[it] == ' ' ? cnt += 1 : cnt += 0;
     }
     return cnt;
 }
@@ -92,7 +99,7 @@ private:
     int regArray[32];
     string regNameArray[32] = {"$zero", "$at", "$v0", "$v1", "$a0", "$a1", "$a2", "$a3", "$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7", "$s0", "$s1", "$s2", "$s3", "$s4", "$s5", "$s6", "$s7", "$t8", "$t9", "$k0", "$k1", "$gp", "$sp", "$fp", "$ra"};
 
-public:    
+public:
     int get_regno(string reg)
     {
         // cout << reg << endl;
@@ -227,7 +234,7 @@ public:
     }
     void storeInstr(string instruction)
     {
-        
+
         if (instruction.find(":") != string::npos)
         {
             //cout << "instr -> " << "XX" << (instruction.substr(0, getIndexofChar(instruction, ':'))) << "XX" << " id-> " << currInstrId << endl;
@@ -237,7 +244,7 @@ public:
         {
             MemArray[currInstrId] = instruction;
 
-            currInstrId+=1;
+            currInstrId += 1;
         }
     }
     int getAddOfLabel(string label)
@@ -254,27 +261,29 @@ public:
     {
         return MemArray[current];
     }
-    void setData(string variable, int value)                //Modified
+    void setData(string variable, int value) //Modified
     {
         if (addofVars.find(variable) == addofVars.end())
         {
             addofVars[variable] = currVarId;
-            currVarId+=4;
+            currVarId += 4;
         }
         //valofVars[addofVars[variable]] = value;
         MemArray[addofVars[variable]] = to_string(value);
     }
-    int get_var_add(string variable){
+    int get_var_add(string variable)
+    {
         return addofVars[variable];
     }
     int getData(string variable)
     {
         if (addofVars.find(variable) == addofVars.end())
             return -1;
-        
+
         //return ValofVars[addofVars[variable]];
         stringstream ss(MemArray[addofVars[variable]]);
-        int val; ss >> val;
+        int val;
+        ss >> val;
         return val;
     }
     void setDataAdd(int address, int value)
@@ -283,64 +292,78 @@ public:
     }
     int getDataAdd(int address)
     {
-        if (MemArray[address + partition] == ""){
+        if (MemArray[address + partition] == "")
+        {
             return 0;
         }
         stringstream ss(MemArray[address + partition]);
-        int val; ss >> val;
+        int val;
+        ss >> val;
         return val;
     }
     void printMemDataContent()
     {
         cout << "Memory content at the end of the execution:" << endl;
-        for (int y = partition; y < 2 * partition; y+=4)
+        for (int y = partition; y < 2 * partition; y += 4)
         {
-            if (MemArray[y] == "") continue;
-            stringstream ss(MemArray[y]); int val; ss >> val; 
-        cout << y - partition << '-' << y+3 - partition <<":" << ' ' << to_string<long>(val, hex) << endl;
-        } 
+            if (MemArray[y] == "")
+                continue;
+            stringstream ss(MemArray[y]);
+            int val;
+            ss >> val;
+            cout << y - partition << '-' << y + 3 - partition << ":" << ' ' << to_string<long>(val, hex) << endl;
+        }
     }
 };
 class RowBuffer
 {
 public:
-    int row_no; // current row
+    int row_no;  // current row
     int back_no; //write back
     int col_no;
     string message;
     map<int, int> M;
-    RowBuffer(){
+    RowBuffer()
+    {
         row_no = -1;
         col_no = -1;
         back_no = -1;
         message = "";
     }
-    void UpdateRowBuffer(int row,int col, int br){
-        if (row != row_no) {
+    void UpdateRowBuffer(int row, int col, int br)
+    {
+        if (row != row_no)
+        {
             M[row] += 1;
         }
         row_no = row;
         col_no = col;
         back_no = br;
     }
-    void print_buffers(){
-        for (const auto &p : M){
-            cout << "Row with starting address " << p.first * 1024 << " was loaded " << p.second << " times." << endl; 
-        } 
+    void print_buffers()
+    {
+        for (const auto &p : M)
+        {
+            cout << "Row with starting address " << p.first * 1024 << " was loaded " << p.second << " times." << endl;
+        }
     }
 };
-void print_req() {
+void print_req()
+{
     //cout << "==============================================================" << endl;
     //cout << "Clock cycle executed: " << Clock_cycle << endl;
-    cout << "DRAM Request Issued" << endl; 
+    cout << "DRAM Request Issued" << endl;
 }
-void print_rl(int r){
+void print_rl(int r)
+{
     cout << "Loading Row " << r << " in Row Buffer." << endl;
 }
-void print_wl(int r){
+void print_wl(int r)
+{
     cout << "Writing Back Row " << r << " in DRAM from Row Buffer." << endl;
 }
-void print_cl(int c){
+void print_cl(int c)
+{
     cout << "Accessing Column " << c << " in Row Buffer." << endl;
 }
 pair<int, string> getMemAdd(string add, RegisterFile &registerFile)
@@ -368,10 +391,12 @@ vector<string> parseInstr(string instruction)
     {
         instruction = instruction.substr(0, instruction.length() - 1);
     }
-    if (instruction.length() == 0){
+    if (instruction.length() == 0)
+    {
         return ans;
     }
-    if (instruction.find(":") != string::npos){
+    if (instruction.find(":") != string::npos)
+    {
         ans.push_back(instruction);
         return ans;
     }
@@ -383,7 +408,8 @@ vector<string> parseInstr(string instruction)
         {
             instruction = instruction.substr(1);
         }
-        while (instruction.length() > 0 && (instruction[instruction.length()-1] == ' ' || instruction[instruction.length()-1] == '\t')){
+        while (instruction.length() > 0 && (instruction[instruction.length() - 1] == ' ' || instruction[instruction.length() - 1] == '\t'))
+        {
             instruction = instruction.substr(0, instruction.length() - 1);
         }
         ans.push_back(instruction);
@@ -413,57 +439,76 @@ vector<string> parseInstr(string instruction)
     }
     return ans;
 }
-bool chk_empty(string instruction){
-    for(int i = 0; i < instruction.length(); i++){
-        if ((instruction[i]!=' ') && (instruction[i] != '\t') && (instruction[i] != '\n')) {
+bool chk_empty(string instruction)
+{
+    for (int i = 0; i < instruction.length(); i++)
+    {
+        if ((instruction[i] != ' ') && (instruction[i] != '\t') && (instruction[i] != '\n'))
+        {
             return false;
         }
     }
     return true;
 }
-void msg_lw(string reg, RowBuffer &rowbuff, RegisterFile &regis){
+void msg_lw(string reg, RowBuffer &rowbuff, RegisterFile &regis)
+{
     int address = rowbuff.row_no * 1024 + rowbuff.col_no;
-    string s = "Loaded value from Memory address " + to_string(address) + "-" + to_string(address+3) + " in the register " + reg + "." + "\nValue in Register " + reg + " is: " + to_string(regis.get_register_data(reg));
+    string s = "Loaded value from Memory address " + to_string(address) + "-" + to_string(address + 3) + " in the register " + reg + "." + "\nValue in Register " + reg + " is: " + to_string(regis.get_register_data(reg));
     cout << s << endl;
 }
-void msg_sw(string reg, RowBuffer &rowbuff, MemoryUnit &mem){
+void msg_sw(string reg, RowBuffer &rowbuff, MemoryUnit &mem)
+{
     int address = rowbuff.row_no * 1024 + rowbuff.col_no;
-    string s = "Saved value from Register " + reg + " in the Memory address " + to_string(address) + "-" + to_string(address+3) + "." +"\nValue at Memory address " + to_string(address) + "-" + to_string(address+3) + " is: " + to_string(mem.getDataAdd(address));
+    string s = "Saved value from Register " + reg + " in the Memory address " + to_string(address) + "-" + to_string(address + 3) + "." + "\nValue at Memory address " + to_string(address) + "-" + to_string(address + 3) + " is: " + to_string(mem.getDataAdd(address));
     cout << s << endl;
 }
-void print_currInstr(string s){
+void print_currInstr(string s)
+{
 
     cout << "Current Instructiion being executed: " << s << endl;
 }
-void print_clk(){
+void print_clk()
+{
     cout << "==============================================================" << endl;
-        //cout << "Current Instruction : " << currentInstr << endl;
+    //cout << "Current Instruction : " << currentInstr << endl;
     cout << "Clock cycle executed: " << Clock_cycle << endl;
     Clock_cycle++;
 }
-int get_address(string mem, RegisterFile registerFile, MemoryUnit memory){
+int get_address(string mem, RegisterFile registerFile, MemoryUnit memory)
+{
     if (mem.find("(") == string::npos || mem.find(")") == string::npos)
     {
-        if (isdigit(mem[0]) == true){
+        if (isdigit(mem[0]) == true)
+        {
             stringstream ss(mem);
-            int val; ss >> val;
+            int val;
+            ss >> val;
             return val;
         }
-        else return memory.get_var_add(mem);
+        else
+            return memory.get_var_add(mem);
     }
-    else return getMemAdd(mem, registerFile).first;
+    else
+        return getMemAdd(mem, registerFile).first;
 }
-void helper(int x, int r[], int m[], queue<string> &ans, vector<bool> &b, vector<string> vec, RegisterFile registerFile, MemoryUnit memory){
-    for(int i = 0; i< vec.size(); i++){
-        if (((get_address (parseInstr(vec[i])[2], registerFile, memory)) / 1024 == x) && (b[i] == false)){
-            if (parseInstr(vec[i])[0] == "sw"){
-                if (r[registerFile.get_regno(parseInstr(vec[i])[1])] == 0){
+void helper(int x, int r[], int m[], queue<string> &ans, vector<bool> &b, vector<string> vec, RegisterFile registerFile, MemoryUnit memory)
+{
+    for (int i = 0; i < vec.size(); i++)
+    {
+        if (((get_address(parseInstr(vec[i])[2], registerFile, memory)) / 1024 == x) && (b[i] == false))
+        {
+            if (parseInstr(vec[i])[0] == "sw")
+            {
+                if (r[registerFile.get_regno(parseInstr(vec[i])[1])] == 0)
+                {
                     ans.push(vec[i]);
                     b[i] = true;
                 }
             }
-            else{
-                if (m[get_address(parseInstr(vec[i])[2], registerFile, memory)] == 0){
+            else
+            {
+                if (m[get_address(parseInstr(vec[i])[2], registerFile, memory)] == 0)
+                {
                     ans.push(vec[i]);
                     b[i] = true;
                 }
@@ -471,31 +516,39 @@ void helper(int x, int r[], int m[], queue<string> &ans, vector<bool> &b, vector
         }
     }
 }
-queue<string> reorder_instructions(int curr, queue<string> &q, RegisterFile registerFile, MemoryUnit memory){
+queue<string> reorder_instructions(int curr, queue<string> &q, RegisterFile registerFile, MemoryUnit memory)
+{
     int register_hold[32] = {0};
     int memory_hold[1048576 / 2] = {0};
     vector<string> main;
     vector<bool> executed;
     map<int, queue<string>> spock;
     //vector<string> vec;
-    while (!q.empty()){
+    while (!q.empty())
+    {
         string instr = q.front();
         vector<string> parametersVec = parseInstr(instr);
-        if (parametersVec[0] == "sw"){
-            if (register_hold[registerFile.get_regno(parametersVec[1])] == 0){
+        if (parametersVec[0] == "sw")
+        {
+            if (register_hold[registerFile.get_regno(parametersVec[1])] == 0)
+            {
                 spock[get_address(parametersVec[2], registerFile, memory) / 1024].push(instr);
             }
-            else {
+            else
+            {
                 main.push_back(instr);
                 executed.push_back(false);
             }
-            memory_hold[get_address(parametersVec[2], registerFile, memory)]++;  
+            memory_hold[get_address(parametersVec[2], registerFile, memory)]++;
         }
-        else{
-            if (memory_hold[get_address(parametersVec[2], registerFile, memory)] == 0){
+        else
+        {
+            if (memory_hold[get_address(parametersVec[2], registerFile, memory)] == 0)
+            {
                 spock[get_address(parametersVec[2], registerFile, memory) / 1024].push(instr);
             }
-            else {
+            else
+            {
                 main.push_back(instr);
                 executed.push_back(false);
             }
@@ -504,12 +557,17 @@ queue<string> reorder_instructions(int curr, queue<string> &q, RegisterFile regi
         q.pop();
     }
     queue<string> ans;
-    if (spock.find(curr) != spock.end()){
-        while(!spock[curr].empty()){
+    if (spock.find(curr) != spock.end())
+    {
+        while (!spock[curr].empty())
+        {
             string ins = spock[curr].front();
-            if (parseInstr(ins)[0] == "lw"){
+            if (parseInstr(ins)[0] == "lw")
+            {
                 register_hold[registerFile.get_regno(parseInstr(ins)[1])]--;
-            }else{
+            }
+            else
+            {
                 memory_hold[get_address(parseInstr(ins)[2], registerFile, memory)]--;
             }
             ans.push(ins);
@@ -517,11 +575,16 @@ queue<string> reorder_instructions(int curr, queue<string> &q, RegisterFile regi
         }
         helper(curr, register_hold, memory_hold, ans, executed, main, registerFile, memory);
     }
-    for (auto it = spock.begin(); it != spock.end(); it++){
-        while(!it->second.empty()){
-            if (parseInstr(it->second.front())[0] == "lw"){
+    for (auto it = spock.begin(); it != spock.end(); it++)
+    {
+        while (!it->second.empty())
+        {
+            if (parseInstr(it->second.front())[0] == "lw")
+            {
                 register_hold[registerFile.get_regno(parseInstr(it->second.front())[1])]--;
-            }else{
+            }
+            else
+            {
                 memory_hold[get_address(parseInstr(it->second.front())[2], registerFile, memory)]--;
             }
             ans.push(it->second.front());
@@ -530,36 +593,46 @@ queue<string> reorder_instructions(int curr, queue<string> &q, RegisterFile regi
         helper(it->first, register_hold, memory_hold, ans, executed, main, registerFile, memory);
     }
     int cf = 0;
-    for(bool b : executed){
-        (b == true) ? cf++ : cf+=0;
+    for (bool b : executed)
+    {
+        (b == true) ? cf++ : cf += 0;
     }
-    while (cf < main.size()){
-    for (int it = 0; it < main.size(); it++){
-        if (executed[it] == false){
-            if (parseInstr(main[it])[0] == "lw"){
-                if (memory_hold[get_address(parseInstr(main[it])[2], registerFile, memory)] == 0){
-                    ans.push(main[it]);
-                    register_hold[registerFile.get_regno(parseInstr(main[it])[1])]--;
-                    executed[it] = true;
-                    cf++;
+    while (cf < main.size())
+    {
+        for (int it = 0; it < main.size(); it++)
+        {
+            if (executed[it] == false)
+            {
+                if (parseInstr(main[it])[0] == "lw")
+                {
+                    if (memory_hold[get_address(parseInstr(main[it])[2], registerFile, memory)] == 0)
+                    {
+                        ans.push(main[it]);
+                        register_hold[registerFile.get_regno(parseInstr(main[it])[1])]--;
+                        executed[it] = true;
+                        cf++;
+                    }
                 }
-            }
-            else{
-                if (register_hold[registerFile.get_regno(parseInstr(main[it])[1])] == 0){
-                    ans.push(main[it]);
-                    memory_hold[get_address(parseInstr(main[it])[2], registerFile, memory)]--;
-                    executed[it] = true;
-                    cf++;
+                else
+                {
+                    if (register_hold[registerFile.get_regno(parseInstr(main[it])[1])] == 0)
+                    {
+                        ans.push(main[it]);
+                        memory_hold[get_address(parseInstr(main[it])[2], registerFile, memory)]--;
+                        executed[it] = true;
+                        cf++;
+                    }
                 }
             }
         }
     }
-    }
     return ans;
 }
-void complete_dram_activity(RowBuffer &rowbuff, queue<string> &q, RegisterFile &reg_fl, MemoryUnit &memory){
+void complete_dram_activity(RowBuffer &rowbuff, queue<string> &q, RegisterFile &reg_fl, MemoryUnit &memory)
+{
     queue<string> re = reorder_instructions(rowbuff.row_no, glob, reg_fl, memory);
-    while (!re.empty()){
+    while (!re.empty())
+    {
         cout << "==============================================================" << endl;
         vector<string> parametersVec = parseInstr(re.front());
         if (parametersVec[0] == "lw")
@@ -569,40 +642,46 @@ void complete_dram_activity(RowBuffer &rowbuff, queue<string> &q, RegisterFile &
             //cout << "Current address is : " << add << endl;
             reg_fl.set_register_data(Rdest, memory.getDataAdd(add));
             //cout << "HELLO" << add << "KAK" << reg_fl.get_register_data(Rdest) << "KFL" << endl;
-            if (add / 1024 != rowbuff.row_no){
-            if (rowbuff.row_no == -1){
-                rowbuff.UpdateRowBuffer(add / 1024, add %1024, -1 );
-                //rowbuff.UpdateDelays(row_access_delay, col_access_delay);
-                cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay-1 << endl;
-                print_rl(add / 1024);
-                Clock_cycle += row_access_delay;
-                lineshow();
-                cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay-1 << endl;
-                print_cl(add % 1024);
-                Clock_cycle += col_access_delay;
-            }
-            else{
-                //cout << "Hello3"<< endl;
-                int curr = rowbuff.row_no;
-                
-                //rowbuff.UpdateDelays(2 * row_access_delay, col_access_delay);
-                cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay-1 << endl;
-                print_wl(rowbuff.row_no);
-                Clock_cycle += row_access_delay;lineshow();
-                cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay-1 << endl;
-                print_rl(add / 1024);
-                Clock_cycle += row_access_delay;lineshow();
-                cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay-1 << endl;
-                print_cl(add % 1024);
-                Clock_cycle += col_access_delay;
-                rowbuff.UpdateRowBuffer(add / 1024, add %1024, curr );
+            if (add / 1024 != rowbuff.row_no)
+            {
+                if (rowbuff.row_no == -1)
+                {
+                    rowbuff.UpdateRowBuffer(add / 1024, add % 1024, -1);
+                    //rowbuff.UpdateDelays(row_access_delay, col_access_delay);
+                    cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay - 1 << endl;
+                    print_rl(add / 1024);
+                    Clock_cycle += row_access_delay;
+                    lineshow();
+                    cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay - 1 << endl;
+                    print_cl(add % 1024);
+                    Clock_cycle += col_access_delay;
+                }
+                else
+                {
+                    //cout << "Hello3"<< endl;
+                    int curr = rowbuff.row_no;
+
+                    //rowbuff.UpdateDelays(2 * row_access_delay, col_access_delay);
+                    cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay - 1 << endl;
+                    print_wl(rowbuff.row_no);
+                    Clock_cycle += row_access_delay;
+                    lineshow();
+                    cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay - 1 << endl;
+                    print_rl(add / 1024);
+                    Clock_cycle += row_access_delay;
+                    lineshow();
+                    cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay - 1 << endl;
+                    print_cl(add % 1024);
+                    Clock_cycle += col_access_delay;
+                    rowbuff.UpdateRowBuffer(add / 1024, add % 1024, curr);
                 }
             }
-            else{
+            else
+            {
                 //COLUMN
-                rowbuff.UpdateRowBuffer(rowbuff.row_no, add %1024, -1 );
+                rowbuff.UpdateRowBuffer(rowbuff.row_no, add % 1024, -1);
                 //rowbuff.UpdateDelays(0, col_access_delay);lineshow();
-                cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay-1 << endl;
+                cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay - 1 << endl;
                 print_cl(add % 1024);
                 Clock_cycle += col_access_delay;
             }
@@ -614,42 +693,49 @@ void complete_dram_activity(RowBuffer &rowbuff, queue<string> &q, RegisterFile &
             string Rdest = parametersVec[1], mem = parametersVec[2];
             int add = stoi(mem);
             //cout << "Current address is : " << add << endl;
-                    if (add / 1024 != rowbuff.row_no){
-                        if (rowbuff.row_no == -1){
-                            rowbuff.UpdateRowBuffer(add / 1024, add %1024, -1 );
-                            //rowbuff.UpdateDelays(row_access_delay, col_access_delay);
-                            cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay-1 << endl;
-                            print_rl(add / 1024);
-                            Clock_cycle += row_access_delay;lineshow();
-                            cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay-1 << endl;
-                            print_cl(add % 1024);
-                            Clock_cycle += col_access_delay;
-                        }
-                        else{
-                            int curr = rowbuff.row_no;
-                            
-                            //rowbuff.UpdateDelays(2 * row_access_delay, col_access_delay);
-                            cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay-1 << endl;
-                            print_wl(rowbuff.row_no);
-                            Clock_cycle += row_access_delay;lineshow();
-                            cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay-1 << endl;
-                            print_rl(add / 1024);
-                            Clock_cycle += row_access_delay;lineshow();
-                            cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay-1 << endl;
-                            print_cl(add % 1024);
-                            Clock_cycle += col_access_delay;
-                            rowbuff.UpdateRowBuffer(add / 1024, add %1024, curr );
-                        }
-                    }
-                    else{
-                        //COLUMN
-                        //print_req();
-                        rowbuff.UpdateRowBuffer(rowbuff.row_no, add %1024, -1 );
-                        //rowbuff.UpdateDelays(0, col_access_delay);
-                        cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay-1 << endl;
-                        print_cl(add % 1024);
-                        Clock_cycle += col_access_delay;
-                    }
+            if (add / 1024 != rowbuff.row_no)
+            {
+                if (rowbuff.row_no == -1)
+                {
+                    rowbuff.UpdateRowBuffer(add / 1024, add % 1024, -1);
+                    //rowbuff.UpdateDelays(row_access_delay, col_access_delay);
+                    cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay - 1 << endl;
+                    print_rl(add / 1024);
+                    Clock_cycle += row_access_delay;
+                    lineshow();
+                    cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay - 1 << endl;
+                    print_cl(add % 1024);
+                    Clock_cycle += col_access_delay;
+                }
+                else
+                {
+                    int curr = rowbuff.row_no;
+
+                    //rowbuff.UpdateDelays(2 * row_access_delay, col_access_delay);
+                    cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay - 1 << endl;
+                    print_wl(rowbuff.row_no);
+                    Clock_cycle += row_access_delay;
+                    lineshow();
+                    cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + row_access_delay - 1 << endl;
+                    print_rl(add / 1024);
+                    Clock_cycle += row_access_delay;
+                    lineshow();
+                    cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay - 1 << endl;
+                    print_cl(add % 1024);
+                    Clock_cycle += col_access_delay;
+                    rowbuff.UpdateRowBuffer(add / 1024, add % 1024, curr);
+                }
+            }
+            else
+            {
+                //COLUMN
+                //print_req();
+                rowbuff.UpdateRowBuffer(rowbuff.row_no, add % 1024, -1);
+                //rowbuff.UpdateDelays(0, col_access_delay);
+                cout << "Clock cycles executed: " << Clock_cycle << "-" << Clock_cycle + col_access_delay - 1 << endl;
+                print_cl(add % 1024);
+                Clock_cycle += col_access_delay;
+            }
             memory.setDataAdd(add, reg_fl.get_register_data(Rdest));
             //cout << "HELLO" << add << "KAK" << reg_fl.get_register_data(Rdest) << "KFL" << endl;
             msg_sw(Rdest, rowbuff, memory);
@@ -658,23 +744,29 @@ void complete_dram_activity(RowBuffer &rowbuff, queue<string> &q, RegisterFile &
         re.pop();
     }
 }
-bool check_dep(RegisterFile &registerFile, string currInstr){
-    
+bool check_dep(RegisterFile &registerFile, string currInstr)
+{
+
     vector<string> parametersVec = parseInstr(currInstr);
     string Rdest = parametersVec[1];
-    if (rg_hold_lw[registerFile.get_regno(Rdest)] != 0 || rg_hold_sw[registerFile.get_regno(Rdest)] != 0){
+    if (rg_hold_lw[registerFile.get_regno(Rdest)] != 0 || rg_hold_sw[registerFile.get_regno(Rdest)] != 0)
+    {
         return false;
     }
-    if (parametersVec[0] == "beq" || parametersVec[0] == "bne"){
+    if (parametersVec[0] == "beq" || parametersVec[0] == "bne")
+    {
         string r1 = parametersVec[1];
         string r2 = parametersVec[2];
-        if (rg_hold_lw[registerFile.get_regno(r1)] != 0 || rg_hold_lw[registerFile.get_regno(r2)] != 0){
+        if (rg_hold_lw[registerFile.get_regno(r1)] != 0 || rg_hold_lw[registerFile.get_regno(r2)] != 0)
+        {
             return false;
         }
         return true;
     }
-    for (int i = 2; i < parametersVec.size(); i++){
-        if (rg_hold_lw[registerFile.get_regno(parametersVec[i])] != 0){
+    for (int i = 2; i < parametersVec.size(); i++)
+    {
+        if (rg_hold_lw[registerFile.get_regno(parametersVec[i])] != 0)
+        {
             return false;
         }
     }
@@ -699,56 +791,59 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         {
             string Rdest = parametersVec[1], Rsrc = parametersVec[2], Src = parametersVec[3];
             //Check if Independent
-            if (check_dep(registerFile, currentInstr)){
+            if (check_dep(registerFile, currentInstr))
+            {
                 print_clk();
                 print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
                 int ans = registerFile.get_register_data(Rsrc) + registerFile.get_register_data(Src);
                 registerFile.set_register_data(Rdest, ans);
-                cout << "Updated value of " << Rdest << " to "<< ans << '.' << endl;
+                cout << "Updated value of " << Rdest << " to " << ans << '.' << endl;
                 programCounter++;
-                
             }
-            else{
-                    complete_dram_activity(rowbuff,  glob, registerFile, memory);
-                    //rowbuff.UpdateHault(true);
-                }
+            else
+            {
+                complete_dram_activity(rowbuff, glob, registerFile, memory);
+                //rowbuff.UpdateHault(true);
+            }
         }
         else if (parametersVec[0] == "sub")
         {
             string Rdest = parametersVec[1], Rsrc = parametersVec[2], Src = parametersVec[3];
             //Check if Independent
-            if (check_dep(registerFile, currentInstr)){
+            if (check_dep(registerFile, currentInstr))
+            {
                 print_clk();
                 print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
                 int ans = registerFile.get_register_data(Rsrc) - registerFile.get_register_data(Src);
                 registerFile.set_register_data(Rdest, ans);
-                cout << "Updated value of " << Rdest << " to "<< ans << '.' << endl;
+                cout << "Updated value of " << Rdest << " to " << ans << '.' << endl;
                 programCounter++;
-                
             }
-            else{
-                    complete_dram_activity(rowbuff,  glob, registerFile, memory);
-                    //rowbuff.UpdateHault(true); //complete dram activity
+            else
+            {
+                complete_dram_activity(rowbuff, glob, registerFile, memory);
+                //rowbuff.UpdateHault(true); //complete dram activity
             }
         }
         else if (parametersVec[0] == "mul")
         {
             string Rdest = parametersVec[1], Rsrc = parametersVec[2], Src = parametersVec[3];
             //Check if Independent
-            if (check_dep(registerFile, currentInstr)){
+            if (check_dep(registerFile, currentInstr))
+            {
                 print_clk();
                 print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
                 int ans = registerFile.get_register_data(Rsrc) * registerFile.get_register_data(Src);
                 registerFile.set_register_data(Rdest, ans);
-                cout << "Updated value of " << Rdest << " to "<< ans << '.' << endl;
+                cout << "Updated value of " << Rdest << " to " << ans << '.' << endl;
                 programCounter++;
-                
             }
-            else{
-                complete_dram_activity(rowbuff,  glob, registerFile, memory);
+            else
+            {
+                complete_dram_activity(rowbuff, glob, registerFile, memory);
                 //rowbuff.UpdateHault(true);
             }
         }
@@ -756,20 +851,24 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         {
             string Rsrc1 = parametersVec[1], Src2 = parametersVec[2], label = parametersVec[3];
             //Check if Independent
-            if (check_dep(registerFile, currentInstr)){
+            if (check_dep(registerFile, currentInstr))
+            {
                 print_clk();
                 print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
                 if (registerFile.get_register_data(Rsrc1) == registerFile.get_register_data(Src2))
-                {  
+                {
                     programCounter = memory.getAddOfLabel(label);
                     cout << "Jumping to label: " << label << endl;
                 }
-                else {programCounter++;}
-                
+                else
+                {
+                    programCounter++;
+                }
             }
-            else{
-                complete_dram_activity(rowbuff,  glob, registerFile, memory);
+            else
+            {
+                complete_dram_activity(rowbuff, glob, registerFile, memory);
                 //rowbuff.UpdateHault(true);
             }
         }
@@ -777,7 +876,8 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         {
             string Rsrc1 = parametersVec[1], Src2 = parametersVec[2], label = parametersVec[3];
             //Check if Independent
-            if (check_dep(registerFile, currentInstr)){
+            if (check_dep(registerFile, currentInstr))
+            {
                 print_clk();
                 print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
@@ -791,8 +891,9 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
                     programCounter++;
                 }
             }
-            else{
-                complete_dram_activity(rowbuff,  glob, registerFile, memory);
+            else
+            {
+                complete_dram_activity(rowbuff, glob, registerFile, memory);
                 //rowbuff.UpdateHault(true);
             }
         }
@@ -800,24 +901,26 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         {
             string Rdest = parametersVec[1], Rsrc1 = parametersVec[2], Src2 = parametersVec[3];
             //Check if Independent
-            if (check_dep(registerFile, currentInstr)){
+            if (check_dep(registerFile, currentInstr))
+            {
                 print_clk();
                 print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
                 if (registerFile.get_register_data(Rsrc1) < registerFile.get_register_data(Src2))
                 {
                     registerFile.set_register_data(Rdest, 1);
-                    cout << "Updated value of " << Rdest << " to "<< 1 << '.' << endl;
+                    cout << "Updated value of " << Rdest << " to " << 1 << '.' << endl;
                 }
                 else
                 {
                     registerFile.set_register_data(Rdest, 0);
-                    cout << "Updated value of " << Rdest << " to "<< 0 << '.' << endl;
+                    cout << "Updated value of " << Rdest << " to " << 0 << '.' << endl;
                 }
                 programCounter++;
             }
-            else{
-                complete_dram_activity(rowbuff,  glob, registerFile, memory);
+            else
+            {
+                complete_dram_activity(rowbuff, glob, registerFile, memory);
                 //rowbuff.UpdateHault(true);
             }
         }
@@ -827,17 +930,20 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             print_clk();
             print_currInstr(currentInstr);
             executionOfInstructionCount[programCounter]++;
-            if (label.find("$") != string::npos){
+            if (label.find("$") != string::npos)
+            {
                 programCounter = getMemAdd(label, registerFile).first;
             }
-            else if (isdigit(label[0])){
+            else if (isdigit(label[0]))
+            {
                 stringstream ss(label);
-                int instr_add; 
-                ss >> instr_add; 
+                int instr_add;
+                ss >> instr_add;
                 programCounter = instr_add;
                 cout << "Jumping to instruction address: " << instr_add << endl;
             }
-            else{
+            else
+            {
                 programCounter = memory.getAddOfLabel(label);
                 cout << "Jumping to label: " << label << endl;
             }
@@ -847,11 +953,11 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             string Rdest = parametersVec[1], mem = parametersVec[2];
             print_clk();
             print_req();
-            int add = get_address(mem,registerFile, memory);
+            int add = get_address(mem, registerFile, memory);
             //cout << "Current address is : " << add << endl;
             //registerFile.set_register_data(Rdest, memory.getDataAdd(add));
             rg_hold_lw[registerFile.get_regno(Rdest)]++;
-            string to_send = "lw " + Rdest + ","+to_string(add)+","+to_string(registerFile.get_register_data(Rdest));
+            string to_send = "lw " + Rdest + "," + to_string(add) + "," + to_string(registerFile.get_register_data(Rdest));
             glob.push(to_send);
             executionOfInstructionCount[programCounter]++;
             programCounter++;
@@ -866,25 +972,27 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             programCounter++;
             print_req();
             rg_hold_sw[registerFile.get_regno(Rdest)]++;
-            string to_send = "sw " + Rdest + ","+to_string(add)+","+to_string(registerFile.get_register_data(Rdest));
+            string to_send = "sw " + Rdest + "," + to_string(add) + "," + to_string(registerFile.get_register_data(Rdest));
             glob.push(to_send);
         }
         else if (parametersVec[0] == "addi")
         {
             string Rdest = parametersVec[1], Rsrc = parametersVec[2];
             //Check if Independent
-            if (rg_hold_lw[registerFile.get_regno(Rdest)] == 0 && rg_hold_sw[registerFile.get_regno(Rdest)] == 0 && rg_hold_lw[registerFile.get_regno(Rsrc)] == 0){
+            if (rg_hold_lw[registerFile.get_regno(Rdest)] == 0 && rg_hold_sw[registerFile.get_regno(Rdest)] == 0 && rg_hold_lw[registerFile.get_regno(Rsrc)] == 0)
+            {
                 print_clk();
                 print_currInstr(currentInstr);
                 executionOfInstructionCount[programCounter]++;
                 int ans = registerFile.get_register_data(Rsrc) + stoi(parametersVec[3]);
                 registerFile.set_register_data(Rdest, ans);
-                cout << "Updated value of " << Rdest << " to "<< ans << '.' << endl;
+                cout << "Updated value of " << Rdest << " to " << ans << '.' << endl;
                 programCounter++;
             }
-            else{
+            else
+            {
                 //cout << "hello333" << endl;
-                complete_dram_activity(rowbuff,  glob, registerFile, memory);
+                complete_dram_activity(rowbuff, glob, registerFile, memory);
                 //rowbuff.UpdateHault(true);
             }
         }
@@ -899,29 +1007,30 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
         //show();
     }
     //cout << "hello123" << endl;
-    complete_dram_activity(rowbuff,  glob, registerFile, memory);
+    complete_dram_activity(rowbuff, glob, registerFile, memory);
     cout << "===========================================" << endl;
-    if (rowbuff.row_no != -1){
+    if (rowbuff.row_no != -1)
+    {
         print_wl(rowbuff.row_no);
-        cout << Clock_cycle << "-" << Clock_cycle + row_access_delay -1 << endl;
-        Clock_cycle+=row_access_delay;
+        cout << Clock_cycle << "-" << Clock_cycle + row_access_delay - 1 << endl;
+        Clock_cycle += row_access_delay;
     }
     cout << "===========================================" << endl;
     cout << "Program execution completed" << endl;
-    cout << "Total clock cycles consumed: " << Clock_cycle-1 << endl;
+    cout << "Total clock cycles consumed: " << Clock_cycle - 1 << endl;
     cout << "===========================================" << endl;
     registerFile.printRegisters();
     cout << "===========================================" << endl;
     memory.printMemDataContent();
     cout << "===========================================" << endl;
-    cout << "Count of row buffer updates: "<< endl;
+    cout << "Count of row buffer updates: " << endl;
     rowbuff.print_buffers();
     cout << "===========================================" << endl;
     cout << "Number of times each instruction was executed: " << endl;
     int j = 0;
     for (int i = 0; i < instructionVector.size(); i++)
     {
-        if (instructionVector[i].find(":") == string::npos && (chk_empty(instructionVector[i])==false) && instructionVector[i]!="EOF")
+        if (instructionVector[i].find(":") == string::npos && (chk_empty(instructionVector[i]) == false) && instructionVector[i] != "EOF")
         {
             cout << instructionVector[i] << endl;
             cout << executionOfInstructionCount[j] << endl;
@@ -932,7 +1041,7 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
 int main(int argc, char const *argv[])
 {
     ios_base::sync_with_stdio(false);
-    cin.tie(NULL);                
+    cin.tie(NULL);
     cout.tie(NULL);
     // Input file section
     fstream infile;
@@ -955,7 +1064,8 @@ int main(int argc, char const *argv[])
     while (getline(infile, test2))
     {
         //cout << test2.length() << endl;
-        if (chk_empty(test2) == true){
+        if (chk_empty(test2) == true)
+        {
             continue;
         }
         //cout << "BB" << test2 << "BB" << endl;

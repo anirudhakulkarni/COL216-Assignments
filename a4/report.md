@@ -44,17 +44,7 @@ make dram
 
 ### 1. DRAM Reordering:
 
-
-
-
-
 ### 2. DRAM Reordering with NBA:
-
-
-
-
-
-
 
 ## Assumptions:
 
@@ -76,56 +66,3 @@ make dram
    This can be severe in case of specific operations like `lw $t1, 1000` and high values of `ROW_ACCESS_DELAY`. In such cases we will waste lot of cycles which could have been saved in the future.
    But such instructions are very specific in occurence.
 2. Object oriented model might take large space even for smaller inputs. All the variables are needed to be initialised and take constant space in contrast to functional approach which creates variables as we need it but looses modularity and order of computations in a MIPS processor is much larger than such case.
-
-## Testing:
-
-#### Strategy:
-
-#### Exceptions:
-
-1. Out of bound access:
-
-```bash
-main:
-   sw $s0, 100000000000($s0)
-```
-
-![](image/report/1618054536576.png)
-
-2. Non existent register:
-
-```bash
-main:
-   addi $s9, $s12, 12
-```
-
-![](image/report/1618054661762.png)
-
-3. Invalid instruction:
-
-```bash
-main:
-   sw5 $s0, 1024
-```
-
-![](image/report/1618054751740.png)
-
-4. Invalid Branch:
-
-```bash
-main:
-  j abc
-```
-
-![](image/report/1618054824836.png)
-
-5. Invalid syntax of instruction:
-
-```bash
-main:
-   addi $s0, $s1, $s2
-```
-
-![](image/report/1618054894450.png)
-
-6.

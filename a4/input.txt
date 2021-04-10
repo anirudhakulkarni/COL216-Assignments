@@ -1,5 +1,9 @@
-addi $t5,$zero,100
-addi $t0,$zero,1000
-sw $t5, 1000($zero)
-lw $t4, 1028($zero)
-sw $t4, 0($t0)
+addi $t1, $t1, 5
+sw $t1, 2500 ($t0)
+main: 
+    addi $t1, $t1, -1
+    lw $t2, 5000 ($t0)
+    beq $t1, $t0, label
+    j main
+label:
+    add $t0, $t2, $t1
