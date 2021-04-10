@@ -80,3 +80,52 @@ make dram
 ## Testing:
 
 #### Strategy:
+
+#### Exceptions:
+
+1. Out of bound access:
+
+```bash
+main:
+   sw $s0, 100000000000($s0)
+```
+
+![](image/report/1618054536576.png)
+
+2. Non existent register:
+
+```bash
+main:
+   addi $s9, $s12, 12
+```
+
+![](image/report/1618054661762.png)
+
+3. Invalid instruction:
+
+```bash
+main:
+   sw5 $s0, 1024
+```
+
+![](image/report/1618054751740.png)
+
+4. Invalid Branch:
+
+```bash
+main:
+  j abc
+```
+
+![](image/report/1618054824836.png)
+
+5. Invalid syntax of instruction:
+
+```bash
+main:
+   addi $s0, $s1, $s2
+```
+
+![](image/report/1618054894450.png)
+
+6.
