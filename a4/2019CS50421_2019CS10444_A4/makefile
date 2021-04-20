@@ -7,6 +7,7 @@ TARGETD1 = dram
 TARGETN1 = nba
 TARGETN2=nba-v2
 TARGETD2=dram-v2
+TARGET2=main
 BUILD_DIR = ./build
 OUT_DIR = ./outputs
 LIB = pkg-config --cflags --libs

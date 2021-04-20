@@ -1,19 +1,9 @@
-main:
-	addi $s0, $zero, 1000
-	addi $s1, $zero, 1024
-	addi $t0, $zero, 1
-	addi $t1, $zero, 2
-	sw $t0, 0($s0)
-	sw $t1, 0($s1)
-	
-	lw $t2, 0($s0)
-	lw $t3, 0($s1)
-	
-	add $t3, $t3, $t2
-	addi $s2, $zero, 1028
-	
-	sw $t3, 0($s2)
-	
-	
-	
-exit:
+addi $t1, $t1, 5
+sw $t1, 2500 ($t0)
+main: 
+    addi $t1, $t1, -1
+    lw $t2, 5000 ($t0)
+    beq $t1, $t0, label
+    j main
+label:
+    add $t0, $t2, $t1

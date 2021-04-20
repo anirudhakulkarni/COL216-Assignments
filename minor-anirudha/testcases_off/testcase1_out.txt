@@ -1,26 +1,16 @@
 main::
-addi $s0, $zero, 10000
-addi $s1, $zero, 00
-addi $s2, $zero, 100
-addi $t1, $zero, 00
-initloop::
-addi $t1, $t1, 11
-sw $t1, 0($s0))
-addi $s0, $s0, 44
-addi $s1, $s1, 11
-slt $s3, $s1, $s22
-bne $s3, $zero, initloopp
-addi $s0, $zero, 10000
-addi $s1, $zero, 00
-addi $s3, $zero, 00
-addi $s2, $zero, 99
-sumloop::
-lw $t0, 0($s0))
-addi $s0, $s0, 44
-lw $t1, 0($s0))
-add $t2, $t0, $t11
-sw $t2, 0($s0))
-addi $s1, $s1, 11
-slt $s3, $s1, $s22
-bne $s3, $zero, sumloopp
-exit::
+	addi $s0, $zero, 10000
+	addi $s1, $zero, 25000
+	addi $t0, $zero, 11
+	addi $t1, $zero, 22
+	addi $t2, $zero, 33
+	addi $t3, $zero, 44
+	sw $t0, 0($s0))
+	sw $t1, 0($s1))
+	sw $t2, 4($s0))
+	sw $t4, 4($s1))
+	lw $t5, 0($s0))
+	lw $t6, 0($s1))
+	lw $t7, 4($s0))
+	lw $t8, 4($s1))
+exitt
