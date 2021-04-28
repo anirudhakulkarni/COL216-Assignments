@@ -1,8 +1,10 @@
-addi $s0, $s0, 1036
-	addi $t1, $t1, 10
-	sw $t1, 0($s0)
-	addi $s0, $zero, 1000
-	lw $t0, 0($s0)
-	addi $s0, $s0, 4
-	lw $t1, 0($s0)
-	add $t2, $t0, $t11
+main:
+addi $t0, $t0, 960
+addi $t1, $t1, 100
+sw $t0, 1025($zero)
+sw $t0, 2050($zero)
+lw $t2, 1070($zero)
+lw $t3, 1089($zero)
+lw $t1, 2180($zero)
+sw $t1, 1049($zero)
+exit:

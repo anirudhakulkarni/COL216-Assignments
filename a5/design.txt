@@ -1,0 +1,30 @@
+#Assume each core to have disjoint address space.  
+Therefore, two programs do not access the same memory address.
+
+#lw/sw across programs will not access a same memory address. 
+
+#Divide the memory blocks across all the cores available. 
+Each core can access it's memory blocks only and can not access memory blocks of other cores.
+
+#While accessing DRAM these relative addresses are converted into physical/absolute addresses. 
+
+#core-1 : lw $t0, 0($s0) (suppose $s0 = 1000) Assuming core-1 is given memory from address 0 - 8191
+
+                $t0 will read the data from address 1000 (physical address)
+
+#core-2 : lw $t0, 0($s0) (suppose $s0 = 1000) Assuming core-2 is given memory from address 8192 - 16383
+
+               $t0 will read the data from address 1000+8192=9192 (physical address)  (1000 refers to relative address)
+
+#Since there are N processors and only 1 DRAM, some "arbitration" is needed to ensure 
+that only one processor's request goes to the DRAM at any time. This task is performed by the 
+Memory Request Manager, which sees N CPUs on one side, and 1 DRAM on the other.
+
+There is only 1 DRAM. All cores will access the same DRAM, but each core has it's 
+share of DRAM addresses it can access. There can be only 1 DRAM access at a time and while 
+DRAM is being accessed, other DRAM requests can not be issued to DRAM. The pending requests wait in the buffer.
+
+Each core will be accessing different memory blocks. Make  the implementation
+in such a way that one core can not access DRAM memory of other cores.
+
+In this assignment you can assume that instructions are not stored in DRAM, and all DRAM accesses are data accesses.
