@@ -15,8 +15,8 @@ int Clock_cycle = 1;
 queue<pair<int, string>> glob;
 int rg_hold_lw[32] = {0};
 int rg_hold_sw[32] = {0};
-const int N = 8;
-int partition = 1048576 / N;
+const int N = 8;    //Specify number of cores
+int partition =  1024 * 32; //For each core allocate 32 * 1024 bytes of memory i.e. 32 rows of DRAM
 map<int, string> clock_instr;
 void print_clksd(int j){
     cout << "==============================================================" << endl;
@@ -226,7 +226,7 @@ public:
     // string MemArray[100];
     int currInstrId[N] = {0};
     int currVarId[N] = {0};
-    int partition = 1048576 / N;
+    int partition =  1024 * 32;
     map<string, int> addofLabels[N];
     map<string, int> addofVars[N];
     //map<int, int> valofVars;
@@ -754,11 +754,11 @@ bool check_dep(RegisterFile &registerFile, string currInstr){
     }
     return true;
 }
-void processInstructions(vector<string> instructionVector, RegisterFile &registerFile, MemoryUnit &memory, RowBuffer &rowbuff)
+void processNextInstruction(int core, string currentInstr, RegisterFile &registerFile, MemoryUnit &memory, RowBuffer &rowbuff)
 {
     
-    string currentInstr = memory.getCurrInstr(0);
-    while (currentInstr != "EOF")
+
+    if (currentInstr != "EOF")
     {
         //if (Clock_cycle > 200)  break;
         //cout << "hello233" << endl;
@@ -1058,39 +1058,10 @@ void processInstructions(vector<string> instructionVector, RegisterFile &registe
             throw exception();
         }
         //registerFile.printRegisters();
-        currentInstr = memory.getCurrInstr(programCounter);
         //show();
     }
     //cout << "hello123" << endl;
-    complete_dram_activity(rowbuff,  glob, registerFile, memory);
-    cout << "===========================================" << endl;
-    if (rowbuff.row_no != -1){
-        cout << "Writing Back Row " << rowbuff.row_no << " in DRAM from Row Buffer." << endl;
-        cout << Clock_cycle << "-" << Clock_cycle + row_access_delay -1 << endl;
-        Clock_cycle+=row_access_delay;
-    }
-    cout << "===========================================" << endl;
-    cout << "Program execution completed" << endl;
-    cout << "Total clock cycles consumed: " << Clock_cycle-1 << endl;
-    cout << "===========================================" << endl;
-    registerFile.printRegisters();
-    cout << "===========================================" << endl;
-    memory.printMemDataContent();
-    cout << "===========================================" << endl;
-    cout << "Count of row buffer updates: "<< endl;
-    rowbuff.print_buffers();
-    cout << "===========================================" << endl;
-    cout << "Number of times each instruction was executed: " << endl;
-    int j = 0;
-    for (int i = 0; i < instructionVector.size(); i++)
-    {
-        if (instructionVector[i].find(":") == string::npos && (chk_empty(instructionVector[i])==false) && instructionVector[i]!="EOF")
-        {
-            cout << instructionVector[i] << endl;
-            cout << executionOfInstructionCount[j] << endl;
-            j++;
-        }
-    }
+
 }
 int main(int argc, char const *argv[])
 {
@@ -1099,9 +1070,9 @@ int main(int argc, char const *argv[])
     cout.tie(NULL);
     fstream infile;
 
-
     vector<string> instructionVector[N];
     string test2;
+    
     for(int cor = 1; cor <= N; cor++){
         string file = "../t" + to_string(cor) + ".txt";
         infile.open(file, ios::in);
@@ -1133,3 +1104,45 @@ int main(int argc, char const *argv[])
     processInstructions(instructionVector, registerFile, memory, rowbuff);
     return 0;
 }
+
+
+
+
+
+
+    // string currentInstr = memory.getCurrInstr(0);
+
+    // currentInstr = memory.getCurrInstr(programCounter);
+
+
+
+
+    // complete_dram_activity(rowbuff,  glob, registerFile, memory);
+    // cout << "===========================================" << endl;
+    // if (rowbuff.row_no != -1){
+    //     cout << "Writing Back Row " << rowbuff.row_no << " in DRAM from Row Buffer." << endl;
+    //     cout << Clock_cycle << "-" << Clock_cycle + row_access_delay -1 << endl;
+    //     Clock_cycle+=row_access_delay;
+    // }                                                                                  
+    // cout << "===========================================" << endl;
+    // cout << "Program execution completed" << endl;
+    // cout << "Total clock cycles consumed: " << Clock_cycle-1 << endl;
+    // cout << "===========================================" << endl;
+    // registerFile.printRegisters();
+    // cout << "===========================================" << endl;
+    // memory.printMemDataContent();
+    // cout << "===========================================" << endl;
+    // cout << "Count of row buffer updates: "<< endl;
+    // rowbuff.print_buffers();
+    // cout << "===========================================" << endl;
+    // cout << "Number of times each instruction was executed: " << endl;
+    // int j = 0;
+    // for (int i = 0; i < instructionVector.size(); i++)
+    // {
+    //     if (instructionVector[i].find(":") == string::npos && (chk_empty(instructionVector[i])==false) && instructionVector[i]!="EOF")
+    //     {
+    //         cout << instructionVector[i] << endl;
+    //         cout << executionOfInstructionCount[j] << endl;
+    //         j++;
+    //     }
+    // }

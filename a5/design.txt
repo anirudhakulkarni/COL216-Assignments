@@ -28,3 +28,9 @@ Each core will be accessing different memory blocks. Make  the implementation
 in such a way that one core can not access DRAM memory of other cores.
 
 In this assignment you can assume that instructions are not stored in DRAM, and all DRAM accesses are data accesses.
+
+If multiple lw/sw requests are raised in a single clock cycle (by different cores), can we assume that all these requests can be added to the DRAM buffer in a single clock cycle? 
+
+This question is about the cycle analysis.
+We encourage you to think what can be done in one cycle or what operation
+needs more than one cycle and come up with a feasible and efficient approach. 
