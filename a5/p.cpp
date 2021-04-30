@@ -23,6 +23,25 @@ bool isnewinstruction()
 void insertoDRAMqueue()
 {
 }
+void processDRAMqueue()
+{
+}
+class DRAM_queue
+{
+public:
+    vector<pair<string, int>> queue;
+    DRAM_queue()
+    {
+    }
+    void insert(string instruction, int core)
+    {
+        this->queue.push_back(make_pair(instruction, core));
+    }
+    void processDRAMqueue(int clock, vector<string> thiscycleinfo)
+    {
+    }
+};
+
 void simulate(vector<vector<string>> instructions)
 {
     // instructions = ith position contains instruction vector of ith processor
@@ -30,7 +49,7 @@ void simulate(vector<vector<string>> instructions)
     int n = instructions.size();
     bool complete = false;
     vecto<vector<vector<string>>> cycleinfoofalln;
-    vector<string> DRAM_queue;
+    DRAM_queue DQ = new DRAM_queue();
     vector<int> programcounter = {0};
     while (!complete)
     {
@@ -47,7 +66,7 @@ void simulate(vector<vector<string>> instructions)
                 if (instructiontype == "lw" || instructiontype == "sw")
                 {
                     thiscycleinfo.push_back(currentinstruction + " DRAM request issued");
-                    insertoDRAMqueue(DRAM_queue, instruction);
+                    DQ.insertoDRAMqueue(instruction, i);
                 }
                 else if (instructiontype == "add" || instructiontype == "sub" || instructiontype = "mul")
                 {
@@ -57,8 +76,9 @@ void simulate(vector<vector<string>> instructions)
                 {
                     thiscycleinfo.push_back(currentinstruction);
                 }
+                programcounter[i]++;
             }
-
+            processDRAMqueue(clock, thiscycleinfo);
             //
             cycleinfoofalln[i].push_back(thiscycleinfo);
         }
