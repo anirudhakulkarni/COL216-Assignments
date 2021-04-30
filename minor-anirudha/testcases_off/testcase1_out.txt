@@ -1,16 +1,18 @@
 main::
-	addi $s0, $zero, 10000
-	addi $s1, $zero, 25000
-	addi $t0, $zero, 11
-	addi $t1, $zero, 22
-	addi $t2, $zero, 33
-	addi $t3, $zero, 44
-	sw $t0, 0($s0))
-	sw $t1, 0($s1))
-	sw $t2, 4($s0))
-	sw $t4, 4($s1))
-	lw $t5, 0($s0))
-	lw $t6, 0($s1))
-	lw $t7, 4($s0))
-	lw $t8, 4($s1))
+addi $s0, $zero, 00
+lw $t0, 1000($s0))
+addi $s1, $zero, 00
+lw $t1, 3000($s1))
+addi $s0, $s0, 44
+lw $t2, 1000($s0))
+addi $s1, $s1, 44
+lw $t3, 3000($s1))
+addi $s0, $s0, 00
+lw $t4, 1008($s0))
+addi $s1, $s1, 44
+lw $t5, 3000($s1))
+addi $s0, $s0, 88
+lw $t6, 1000($s0))
+addi $s1, $s1, 00
+lw $t7, 3004($s1))
 exitt
