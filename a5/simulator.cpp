@@ -17,7 +17,7 @@ string remove_extra_whitespaces(const string &input);
 vector<string> parseInstr(string instruction);
 bool check_dep(Instruction current);
 int getIndexofChar(string str, char c);
-void processInstruction(int core, Instruction current, int cycle);
+void processInstruction(int core, Instruction current);
 RegisterFile registerFile[N];
 MemoryUnit memory;
 int clock_cycle = -1;
@@ -30,7 +30,7 @@ int reg_hold_lw[N][32] = {0};
 struct Instruction {
     string kind; // add, sub, mul, addi, lw, sw, beq, bne, slt, j, label
     string label;
-    int attributes[3]; 
+    int attributes[3] = {-1}; 
     string line; //stores entire instruction
     //for add, sub, mul, slt --- stores register number of all registers
     //for addi, stores register numbers of Rdest and Rsrc and const
@@ -272,13 +272,20 @@ void simulate_lookahead(){
 }
 void simulate_basic(){
     bool complete = false;
-    bool over = false;
-    while(!over){
+    int cores_executed = 0;
+    bool cores_execution_finished[N] = {false};
+    while(cores_executed < N){
         clock_cycle++;
         bool DRAM_issued = false; //only one DRAM request issued in this cycle
         for (int core = 0; core < N; core++){
             vector<string> this_cycle_info;
             Instruction current = instructionVector[core][programCounter[core]];
+            if (current.kind == "EOF"){
+                if (cores_execution_finished[core] == false){
+                    cores_execution_finished[core] = true;cores_executed++;
+                }
+                continue;
+            }
             if (current.kind == "lw" || current.kind == "sw"){
                 if (DRAM_issued) continue;
                 current.attributes[1] = current.attributes[1] + registerFile[core].get_register_data(current.attributes[2]);
@@ -293,15 +300,108 @@ void simulate_basic(){
                 this_cycle_info.push_back("DRAM Request Issued for core " + to_string(core+1) + " : " + current.line);
             }
             else if (current.kind == "j"){
-                processInstruction(core, current, clock_cycle);
+                processInstruction(core, current);
             }
             else if (check_dep(current) == false) continue;
             else{
-                processInstruction(core, current, clock_cycle);
+                processInstruction(core, current);
                 this_cycle_info.push_back("Instruction executed for core " + to_string(core+1) + " : " + current.line);
             }
             cycleinfoofalln[core].push_back(this_cycle_info);
         }
-        
+
     }
+}
+void processInstruction(int core, Instruction current)
+{
+        if (current.kind == "add")
+        {
+            int ans = registerFile[core].get_register_data(current.attributes[1]) +
+                            registerFile[core].get_register_data(current.attributes[2]);
+            registerFile[core].set_register_data(current.attributes[0], ans);
+            programCounter[core]++;
+        }
+        if (current.kind == "sub")
+        {
+            int ans = registerFile[core].get_register_data(current.attributes[1]) -
+                            registerFile[core].get_register_data(current.attributes[2]);
+            registerFile[core].set_register_data(current.attributes[0], ans);
+            programCounter[core]++;
+        }
+        if (current.kind == "mul")
+        {
+            int ans = registerFile[core].get_register_data(current.attributes[1]) *
+                            registerFile[core].get_register_data(current.attributes[2]);
+            registerFile[core].set_register_data(current.attributes[0], ans);
+            programCounter[core]++;
+        }
+        else if (current.kind == "beq")
+        {
+            if (registerFile[core].get_register_data(current.attributes[0]) == registerFile[core].get_register_data(current.attributes[1]))
+            {
+                programCounter[core] = memory.getAddOfLabel(current.label, core);
+            }
+            else
+            {
+                programCounter[core]++;
+            }
+        }
+        else if (current.kind == "bne")
+        {
+            if (registerFile[core].get_register_data(current.attributes[0]) != registerFile[core].get_register_data(current.attributes[1]))
+            {
+                programCounter[core] = memory.getAddOfLabel(current.label, core);
+            }
+            else
+            {
+                programCounter[core]++;
+            }
+        }
+        else if (current.kind == "slt")
+        {
+            if (registerFile[core].get_register_data(current.attributes[1]) < registerFile[core].get_register_data(current.attributes[2]))
+            {
+                registerFile[core].set_register_data(current.attributes[0], 1);
+            }
+            else
+            {
+                registerFile[core].set_register_data(current.attributes[0], 0);
+            }
+            programCounter[core]++;
+        }
+        else if (current.kind == "j")
+        {
+            if (isdigit(current.label[0]))
+            {
+                programCounter[core] = stoi(label);
+            }
+            else
+            {
+                programCounter[core] = memory.getAddOfLabel(label, core);
+            }
+        }
+        else if (current.kind == "lw")
+        {
+            int mem_add = registerFile[core].get_register_data(current.attributes[2]);
+            registerFile[core].set_register_data(current.attributes[0], memory.getDataAdd(current.attributes[1]) + mem_add);
+            programCounter[core]++;
+        }
+        else if (current.kind == "sw")
+        {
+            int mem_add = registerFile[core].get_register_data(current.attributes[2]);
+            memory.setDataAdd(mem_add + current.attributes[1] + mem_add,
+                         registerFile[core].get_register_data(current.attributes[0]), core);
+            programCounter[core]++;
+        }
+        else if (current.kind == "addi")
+        {
+            int ans = registerFile[core].get_register_data(current.attributes[1]) + current.attributes[2];
+            registerFile[core].set_register_data(current.attributes[0], ans);
+            programCounter[core]++;
+        }
+        else
+        {
+            cout << "INVALID INSTRUCTION DETECTED!! " << current.line << endl;
+            throw exception();
+        }
 }
