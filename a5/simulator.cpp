@@ -5,26 +5,14 @@
 
 using namespace std;
 
-
-
-int row_access_delay = 10;
-int col_access_delay = 2;
-const int N = 8; // Number of cores
-template <class T>
-string to_string(T t, ios_base &(*f)(ios_base &));
-bool chk_empty(string instruction);
-string remove_extra_whitespaces(const string &input);
 vector<string> parseInstr(string instruction);
-bool check_dep(Instruction current);
-int getIndexofChar(string str, char c);
-void processInstruction(int core, Instruction current);
+const int N = 8; // Number of cores
 RegisterFile registerFile[N];
 MemoryUnit memory;
 int clock_cycle = -1;
 vector<vector<string>> cycleinfoofalln[N];
-int programCounter[N] = {0};
-int reg_hold_sw[N][32] = {0};
-int reg_hold_lw[N][32] = {0};
+int row_access_delay = 10;
+int col_access_delay = 2;
 
 
 struct Instruction {
@@ -102,9 +90,24 @@ public:
         return;
     }
 };
+
 DRAM Dram;
 void simulate_lookahead();
 void simulate_basic();
+template <class T>
+string to_string(T t, ios_base &(*f)(ios_base &));
+bool chk_empty(string instruction);
+string remove_extra_whitespaces(const string &input);
+
+bool check_dep(Instruction current);
+int getIndexofChar(string str, char c);
+void processInstruction(int core, Instruction current);
+
+int programCounter[N] = {0};
+int reg_hold_sw[N][32] = {0};
+int reg_hold_lw[N][32] = {0};
+
+
 
 int main(int argc, char const *argv[])
 {
@@ -298,6 +301,7 @@ void simulate_basic(){
                 }
                 DRAM_issued = true;
                 this_cycle_info.push_back("DRAM Request Issued for core " + to_string(core+1) + " : " + current.line);
+                programCounter[core]++;
             }
             else if (current.kind == "j"){
                 processInstruction(core, current);
@@ -373,25 +377,23 @@ void processInstruction(int core, Instruction current)
         {
             if (isdigit(current.label[0]))
             {
-                programCounter[core] = stoi(label);
+                programCounter[core] = stoi(current.label);
             }
             else
             {
-                programCounter[core] = memory.getAddOfLabel(label, core);
+                programCounter[core] = memory.getAddOfLabel(current.label, core);
             }
         }
         else if (current.kind == "lw")
         {
             int mem_add = registerFile[core].get_register_data(current.attributes[2]);
-            registerFile[core].set_register_data(current.attributes[0], memory.getDataAdd(current.attributes[1]) + mem_add);
-            programCounter[core]++;
+            registerFile[core].set_register_data(current.attributes[0], memory.getDataAdd(current.attributes[1], core) + mem_add);
         }
         else if (current.kind == "sw")
         {
             int mem_add = registerFile[core].get_register_data(current.attributes[2]);
             memory.setDataAdd(mem_add + current.attributes[1] + mem_add,
-                         registerFile[core].get_register_data(current.attributes[0]), core);
-            programCounter[core]++;
+            registerFile[core].get_register_data(current.attributes[0]), core);
         }
         else if (current.kind == "addi")
         {
