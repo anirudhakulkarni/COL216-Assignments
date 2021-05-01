@@ -5,6 +5,8 @@
 
 using namespace std;
 
+
+
 int row_access_delay = 10;
 int col_access_delay = 2;
 const int N = 8; // Number of cores
@@ -13,12 +15,18 @@ string to_string(T t, ios_base &(*f)(ios_base &));
 bool chk_empty(string instruction);
 string remove_extra_whitespaces(const string &input);
 vector<string> parseInstr(string instruction);
+bool check_dep(Instruction current);
 int getIndexofChar(string str, char c);
+void processInstruction(int core, Instruction current, int cycle);
 RegisterFile registerFile[N];
 MemoryUnit memory;
 int clock_cycle = -1;
-vector<vector<vector<string>>> cycleinfoofalln;
+vector<vector<string>> cycleinfoofalln[N];
 int programCounter[N] = {0};
+int reg_hold_sw[N][32] = {0};
+int reg_hold_lw[N][32] = {0};
+
+
 struct Instruction {
     string kind; // add, sub, mul, addi, lw, sw, beq, bne, slt, j, label
     string label;
@@ -78,7 +86,23 @@ struct Instruction {
     }
 };
 vector<Instruction> instructionVector[N];
+class DRAM
+{
+public:
+    queue<pair<int, Instruction>> DramQueue;
 
+    DRAM(){
+        while (!DramQueue.empty()) DramQueue.pop();
+    }
+
+    void insertoDRAMqueue(int core, Instruction instruction){
+        DramQueue.push(make_pair(core, instruction));
+    }
+    void startCoreExecution(int currentCycle, int core){
+        return;
+    }
+};
+DRAM Dram;
 void simulate_lookahead();
 void simulate_basic();
 
@@ -210,6 +234,31 @@ int getIndexofChar(string str, char c){
     }
     return a;
 }
+bool check_dep(Instruction current){
+    
+    //vector<string> parametersVec = parseInstr(currInstr);
+    //string Rdest = parametersVec[1];              j, beq, bne, lw, sw, addi, add, mul, sub, slt, 
+    if (current.kind == "beq" || current.kind == "bne"){
+        if (reg_hold_lw[current.attributes[0]] != 0 || reg_hold_lw[current.attributes[1]] != 0){
+            return false;
+        }
+        return true;
+    }
+    if (current.kind == "j") return true;
+    if (reg_hold_lw[current.attributes[0]] != 0 || reg_hold_sw[current.attributes[0]] != 0){
+        return false;
+    }
+    if (current.kind == "addi"){
+        if (reg_hold_lw[current.attributes[1]] != 0){
+            return false;
+        }
+        return true;
+    }
+    if (reg_hold_lw[current.attributes[1]] != 0 || reg_hold_lw[current.attributes[2]] != 0){
+        return false;
+    }
+    return true;
+}
 void simulate_lookahead(){
     bool complete = false;
     bool over = false;
@@ -226,9 +275,33 @@ void simulate_basic(){
     bool over = false;
     while(!over){
         clock_cycle++;
+        bool DRAM_issued = false; //only one DRAM request issued in this cycle
         for (int core = 0; core < N; core++){
             vector<string> this_cycle_info;
             Instruction current = instructionVector[core][programCounter[core]];
+            if (current.kind == "lw" || current.kind == "sw"){
+                if (DRAM_issued) continue;
+                current.attributes[1] = current.attributes[1] + registerFile[core].get_register_data(current.attributes[2]);
+                Dram.insertoDRAMqueue(core, current);
+                if (current.kind == "lw"){
+                    reg_hold_lw[core][current.attributes[0]]++;
+                }
+                else{
+                    reg_hold_sw[core][current.attributes[0]]++;
+                }
+                DRAM_issued = true;
+                this_cycle_info.push_back("DRAM Request Issued for core " + to_string(core+1) + " : " + current.line);
+            }
+            else if (current.kind == "j"){
+                processInstruction(core, current, clock_cycle);
+            }
+            else if (check_dep(current) == false) continue;
+            else{
+                processInstruction(core, current, clock_cycle);
+                this_cycle_info.push_back("Instruction executed for core " + to_string(core+1) + " : " + current.line);
+            }
+            cycleinfoofalln[core].push_back(this_cycle_info);
         }
+        
     }
 }
