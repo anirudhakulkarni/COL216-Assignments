@@ -7,7 +7,7 @@ class RegisterFile
 public:    
     int get_regno(string reg);
     RegisterFile();
-    int get_register_data(string register_name);
-    void set_register_data(string register_name, int data);
+    int get_register_data(int register_num);
+    void set_register_data(int register_num, int data);
     void printRegisters();
 };

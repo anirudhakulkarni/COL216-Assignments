@@ -15,8 +15,73 @@ string remove_extra_whitespaces(const string &input);
 vector<string> parseInstr(string instruction);
 int getIndexofChar(string str, char c);
 RegisterFile registerFile[N];
-vector<string> instructionVector[N];
 MemoryUnit memory;
+int clock_cycle = -1;
+vector<vector<vector<string>>> cycleinfoofalln;
+int programCounter[N] = {0};
+struct Instruction {
+    string kind; // add, sub, mul, addi, lw, sw, beq, bne, slt, j, label
+    string label;
+    int attributes[3]; 
+    string line; //stores entire instruction
+    //for add, sub, mul, slt --- stores register number of all registers
+    //for addi, stores register numbers of Rdest and Rsrc and const
+    //for beq, bne, stores the register numbers of R1 and R2 and label stores the label
+    //for lw / sw , stores the Register number of Rdest, offset and registerNumber of R3.
+    void setInstruction(string instruction){
+        line = instruction;
+        if (instruction == "EOF"){
+            kind = "EOF";
+            return;
+        }
+        vector<string> params = parseInstr(instruction);
+        if (params.size() == 1){
+            kind = label;
+            label = params[0];
+            return;
+        }
+        kind = params[0];
+        if (kind == "add" || kind == "sub" || kind == "mul" || kind == "slt"){
+            attributes[0] = registerFile[0].get_regno(params[1]);
+            attributes[1] = registerFile[0].get_regno(params[2]);
+            attributes[2] = registerFile[0].get_regno(params[3]);
+            return;
+        }
+        else if (kind == "addi"){
+            attributes[0] = registerFile[0].get_regno(params[1]);
+            attributes[1] = registerFile[0].get_regno(params[2]);
+            attributes[2] = stoi(params[3]);
+        }
+        else if (kind == "beq" || kind == "bne"){
+            attributes[0] = registerFile[0].get_regno(params[1]);
+            attributes[1] = registerFile[0].get_regno(params[2]);
+            label = params[3];
+        }
+        else if (kind ==  "j"){
+            label = params[1];
+        }
+        else if (kind == "lw" || kind == "sw"){
+            attributes[0] = registerFile[0].get_regno(params[1]);
+            string add = params[2];
+            size_t start = add.find_first_of("(");
+            size_t end = add.find_first_of(")");
+            int sz = end - start - 1;
+            stringstream ss(add.substr(0, start));
+            int offset;ss >> offset;
+            attributes[1] = offset;
+            string reg = add.substr(start + 1, sz);
+            attributes[2] = registerFile[0].get_regno(reg);
+        }
+        else{
+            throw exception();
+        }
+    }
+};
+vector<Instruction> instructionVector[N];
+
+void simulate_lookahead();
+void simulate_basic();
+
 int main(int argc, char const *argv[])
 {
     ios_base::sync_with_stdio(false);
@@ -33,20 +98,19 @@ int main(int argc, char const *argv[])
             if (chk_empty(test2) == true){
                 continue;
             }
-            instructionVector[cor].push_back(test2);
+            Instruction currIst;
+            currIst.setInstruction(test2);
+            instructionVector[cor-1].push_back(currIst);
         }
-        instructionVector[cor-1].push_back("EOF");
+        Instruction endIst;
+        endIst.setInstruction("EOF");
+        instructionVector[cor-1].push_back(endIst);
     }
-
-    int executionOfInstructionCount[N][999] = {0};
-    fo(core, N){
-        for (int i = 0; i < instructionVector[core].size(); i++)
-        {
-            string temp = instructionVector[core][i];
-            memory.storeInstr(temp, core);
+    for (int core = 0; core < N; core++){
+        for (int i = 0; i < instructionVector[core].size(); i++){
+            memory.storeInstr(instructionVector[core][i].line, i);
         }
     }
-    
     return 0;
 }
 
@@ -145,4 +209,26 @@ int getIndexofChar(string str, char c){
         a++;
     }
     return a;
+}
+void simulate_lookahead(){
+    bool complete = false;
+    bool over = false;
+    while(!over){
+        clock_cycle++;
+        for (int core = 0; core < N; core++){
+            vector<string> this_cycle_info;
+            Instruction current = instructionVector[core][programCounter[core]];
+        }
+    }
+}
+void simulate_basic(){
+    bool complete = false;
+    bool over = false;
+    while(!over){
+        clock_cycle++;
+        for (int core = 0; core < N; core++){
+            vector<string> this_cycle_info;
+            Instruction current = instructionVector[core][programCounter[core]];
+        }
+    }
 }

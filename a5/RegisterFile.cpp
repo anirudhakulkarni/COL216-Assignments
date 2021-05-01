@@ -61,19 +61,19 @@ RegisterFile :: RegisterFile()
     for (int it = 0; it < 32; it++)
         regArray[it] = 0;
 }
-int RegisterFile :: get_register_data(string register_name)
+int RegisterFile :: get_register_data(int register_num)
 {
-    return regArray[get_regno(register_name)];
+    return regArray[register_num];
 }
-void RegisterFile :: set_register_data(string register_name, int data)
+void RegisterFile :: set_register_data(int register_num, int data)
 {
-    if (register_name == "$zero")
+    if (register_num == 0)
     {
         cout << endl;
         cout << "$zero can not be set  " << endl;
         throw exception();
     }
-    regArray[get_regno(register_name)] = data;
+    regArray[register_num] = data;
 }
 void RegisterFile :: printRegisters()
 {
