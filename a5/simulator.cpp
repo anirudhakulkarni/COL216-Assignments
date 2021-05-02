@@ -10,11 +10,15 @@ const int N = 8; // Number of cores
 RegisterFile registerFile[N];
 MemoryUnit memory;
 int clock_cycle = -1;
+int Partition = 1024 * 32;
 vector<vector<string>> cycleinfoofalln[N];
+vector<pair<int, string>> DRAM_cycle_info;
 int row_access_delay = 10;
 int col_access_delay = 2;
-
-
+int programCounter[N] = {0};
+int reg_hold_sw[N][32] = {0};
+int reg_hold_lw[N][32] = {0};
+deque<int> core_process_next;
 struct Instruction {
     string kind; // add, sub, mul, addi, lw, sw, beq, bne, slt, j, label
     string label;
@@ -74,41 +78,112 @@ struct Instruction {
     }
 };
 vector<Instruction> instructionVector[N];
+void processInstruction(int core, Instruction current);
+queue<pair<int, Instruction>> reorder_function(vector<pair<int, Instruction>> &MRM_storage);
 class DRAM
 {
 public:
-    queue<pair<int, Instruction>> DramQueue;
-
+    deque<pair<int, Instruction>> DramQueue;
+    int row_wait;
+    int col_wait;
+    int row_in_rowbuff;
+    int prev_row;
     DRAM(){
-        while (!DramQueue.empty()) DramQueue.pop();
+        row_wait = 0;
+        col_wait = 0;
+        row_in_rowbuff = -1;
+        prev_row = -1;
+        while (!DramQueue.empty()) DramQueue.pop_front();
     }
 
     void insertoDRAMqueue(int core, Instruction instruction){
-        DramQueue.push(make_pair(core, instruction));
+        DramQueue.push_back(make_pair(core, instruction));
     }
-    void startCoreExecution(int currentCycle, int core){
-        return;
+    void insert_front_to_dram(int core, Instruction ins){
+        deque<pair<int, Instruction>>::iterator it = DramQueue.begin();
+        it++;
+        it = DramQueue.insert(it, make_pair(core, ins));
+    }
+    bool busy_DRAM(){
+        if (DramQueue.empty()){
+            return false;
+        }
+        return true;
+    }
+    pair<bool, string> process_DRAM(){
+        pair<int, Instruction> here = DramQueue.front();
+        Instruction current_ins = here.second;
+        int curr_core = here.first;
+        int mem_add = (Partition * curr_core + current_ins.attributes[1]);
+        if (row_wait = 0 && col_wait == 0){
+            int row_to_access = mem_add / 1024;
+            if (row_in_rowbuff == -1){
+                row_in_rowbuff = row_to_access;
+                row_wait = row_access_delay;
+                col_wait = col_access_delay;
+            }
+            else if (row_to_access == row_in_rowbuff){
+                row_wait = 0;
+                col_wait = col_access_delay;
+            }
+            else{
+                prev_row = row_in_rowbuff;
+                row_in_rowbuff = row_to_access;
+                row_wait = 2 * row_access_delay;
+                col_wait = col_access_delay;
+            }
+        }
+        if (row_wait > 10){
+            row_wait--;
+            return make_pair(false, "Writing Back Row " + to_string(prev_row) + " in Row Buffer");
+        }
+        else if (row_wait > 0){
+            row_wait--;
+            return make_pair(false, "Loading Row " + to_string(row_in_rowbuff) + " in Row Buffer");
+        }
+        else if (col_wait > 0){
+            col_wait--;
+            return make_pair(false, "Loading Column " + to_string(mem_add % 1024) + " in Row Buffer");
+        }
+        else{
+            processInstruction(here.first, current_ins);
+            return make_pair(true, "Core #" + to_string(here.first) + " : Execution of Instruction " + current_ins.line + " finished ");
+            DramQueue.pop_front();
+        }
     }
 };
-
 DRAM Dram;
+class MRM
+{
+public:
+    vector<pair<int, Instruction>> MRM_Storage;
+    void insert_to_MRM(int core, Instruction instruction){
+        if (!Dram.busy_DRAM()){
+            Dram.insertoDRAMqueue(core, instruction);
+            return;
+        }
+        int current_row = (Partition * core + MRM_Storage[0].second.attributes[1]) / 1024;
+        if (current_row == Dram.row_in_rowbuff){
+            Dram.insert_front_to_dram(core, instruction);
+            return;
+        }
+        MRM_Storage.push_back(make_pair(core, instruction));
+    }
+    void issue_Request_to_Dram(int core){
+        if (!Dram.busy_DRAM()){
+            queue<pair<int, Instruction>> toInsert = reorder_function(MRM_Storage);
+        }
+    }
+};
+MRM Mem_Request_manager;
 void simulate_lookahead();
 void simulate_basic();
 template <class T>
 string to_string(T t, ios_base &(*f)(ios_base &));
 bool chk_empty(string instruction);
 string remove_extra_whitespaces(const string &input);
-
 bool check_dep(Instruction current);
 int getIndexofChar(string str, char c);
-void processInstruction(int core, Instruction current);
-
-int programCounter[N] = {0};
-int reg_hold_sw[N][32] = {0};
-int reg_hold_lw[N][32] = {0};
-
-
-
 int main(int argc, char const *argv[])
 {
     ios_base::sync_with_stdio(false);
@@ -140,7 +215,6 @@ int main(int argc, char const *argv[])
     }
     return 0;
 }
-
 bool chk_empty(string instruction){
     for(int i = 0; i < instruction.length(); i++){
         if ((instruction[i]!=' ') && (instruction[i] != '\t') && (instruction[i] != '\n')) {
@@ -292,7 +366,7 @@ void simulate_basic(){
             if (current.kind == "lw" || current.kind == "sw"){
                 if (DRAM_issued) continue;
                 current.attributes[1] = current.attributes[1] + registerFile[core].get_register_data(current.attributes[2]);
-                Dram.insertoDRAMqueue(core, current);
+                Mem_Request_manager.insert_to_MRM(core, current);
                 if (current.kind == "lw"){
                     reg_hold_lw[core][current.attributes[0]]++;
                 }
@@ -300,20 +374,34 @@ void simulate_basic(){
                     reg_hold_sw[core][current.attributes[0]]++;
                 }
                 DRAM_issued = true;
-                this_cycle_info.push_back("DRAM Request Issued for core " + to_string(core+1) + " : " + current.line);
+                this_cycle_info.push_back("Core #" + to_string(core+1) + " : DRAM Request Issued for" + current.line);
                 programCounter[core]++;
             }
             else if (current.kind == "j"){
                 processInstruction(core, current);
             }
-            else if (check_dep(current) == false) continue;
+            else if (check_dep(current) == false){
+                deque<int>::iterator it = find(core_process_next.begin(),core_process_next.end(),core);
+                if(it != core_process_next.end()){
+                    core_process_next.push_back(core);
+                }
+                continue;
+            }
             else{
                 processInstruction(core, current);
                 this_cycle_info.push_back("Instruction executed for core " + to_string(core+1) + " : " + current.line);
             }
             cycleinfoofalln[core].push_back(this_cycle_info);
         }
-
+        pair<int, string> state = Dram.process_DRAM();
+        if (state.first == true){
+            clock_cycle++; //TO avoid 2 register writes in same cycle
+            DRAM_cycle_info.push_back(make_pair(clock_cycle, state.second));
+        }
+        else{
+            DRAM_cycle_info.push_back(make_pair(clock_cycle, state.second));
+        }
+        if (!core_process_next.empty()) Mem_Request_manager.issue_Request_to_Dram(core_process_next.front());
     }
 }
 void processInstruction(int core, Instruction current)
@@ -386,14 +474,12 @@ void processInstruction(int core, Instruction current)
         }
         else if (current.kind == "lw")
         {
-            int mem_add = registerFile[core].get_register_data(current.attributes[2]);
-            registerFile[core].set_register_data(current.attributes[0], memory.getDataAdd(current.attributes[1], core) + mem_add);
+            registerFile[core].set_register_data(current.attributes[0], memory.getDataAdd(current.attributes[1], core));
         }
         else if (current.kind == "sw")
         {
-            int mem_add = registerFile[core].get_register_data(current.attributes[2]);
-            memory.setDataAdd(mem_add + current.attributes[1] + mem_add,
-            registerFile[core].get_register_data(current.attributes[0]), core);
+            memory.setDataAdd(current.attributes[1],
+                registerFile[core].get_register_data(current.attributes[0]), core);
         }
         else if (current.kind == "addi")
         {
