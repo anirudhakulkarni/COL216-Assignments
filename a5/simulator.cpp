@@ -6,7 +6,7 @@
 using namespace std;
 
 vector<string> parseInstr(string instruction);
-const int N = 2; // Number of cores
+const int N = 3; // Number of cores
 //RegisterFile registerFile[N];
 RegisterFile registerFile;
 MemoryUnit memory;
@@ -20,7 +20,7 @@ int col_access_delay = 2;
 int programCounter[N] = {0};
 int reg_hold_sw[N][32] = {0};
 int reg_hold_lw[N][32] = {0};
-deque<int> core_process_next;
+vector<int> core_process_next;
 struct Instruction {
     string kind; // add, sub, mul, addi, lw, sw, beq, bne, slt, j, label
     string label;
@@ -85,7 +85,7 @@ queue<pair<int, Instruction>> reorder_function(int core, vector<pair<int, Instru
 class DRAM
 {
 public:
-    deque<pair<int, Instruction>> DramQueue;
+    vector<pair<int, Instruction>> DramQueue;
     int row_wait = 0;
     int col_wait = 0;
     int row_in_rowbuff = -1;
@@ -95,14 +95,13 @@ public:
         col_wait = 0;
         row_in_rowbuff = -1;
         prev_row = -1;
-        while (!DramQueue.empty()) DramQueue.pop_front();
     }
 
     void insertoDRAMqueue(int core, Instruction instruction){
         DramQueue.push_back(make_pair(core, instruction));
     }
     void insert_front_to_dram(int core, Instruction ins){
-        deque<pair<int, Instruction>>::iterator it = DramQueue.begin();
+        vector<pair<int, Instruction>>::iterator it = DramQueue.begin();
         it++;
         it = DramQueue.insert(it, make_pair(core, ins));
     }
@@ -116,7 +115,7 @@ public:
         if (DramQueue.empty()){
             return make_pair(false, "");
         }
-        pair<int, Instruction> here = DramQueue.front();
+        pair<int, Instruction> here = DramQueue[0];
         Instruction current_ins = here.second;
         int curr_core = here.first;
         int mem_add = (Partition * curr_core + current_ins.attributes[1]);
@@ -150,7 +149,8 @@ public:
             col_wait--;
             if (col_wait == 0 && row_wait == 0){
                 processInstruction(here.first, current_ins);
-                DramQueue.pop_front();
+                vector<pair<int, Instruction>> :: iterator it = DramQueue.begin();
+                DramQueue.erase(it);
                 return make_pair(true, to_string(here.first + 1) + ":Execution of Instruction " + current_ins.line + " finished." + "Loading Column " + to_string(mem_add % 1024) + " in Row Buffer\n");
             }
             return make_pair(false, "Loading Column " + to_string(mem_add % 1024) + " in Row Buffer");
@@ -185,6 +185,7 @@ public:
     }
     void assert_core_executed(){
         bool to_remove = true;
+        if (core_process_next.size() == 0) return;
         for (int i = 0; i < Dram.DramQueue.size(); i++) {
             if (Dram.DramQueue[i].first == core_process_next[0]){
                 to_remove = false;
@@ -196,7 +197,8 @@ public:
             }
         }
         if (to_remove == true){
-            core_process_next.pop_front();
+            vector<int> :: iterator it = core_process_next.begin();
+            core_process_next.erase(it);
         }
     }
 };
@@ -236,16 +238,18 @@ int main(int argc, char const *argv[])
         cout << "EOF" << endl;
         instructionVector[cor-1].push_back(endIst);
     }
-    cout << endl << "Instructions read successfully" << endl;
+    cout << endl << "Instructions read successfully" << endl << endl;
     for (int core = 0; core < N; core++){
         for (int i = 0; i < instructionVector[core].size(); i++){
             memory.storeInstr(instructionVector[core][i].line, core);
         }
     }
-    cout << "Instructions stored successfully" << endl;
+    cout << "Instructions stored successfully" << endl << endl;
+    Dram.DramQueue.clear();
+    Mem_Request_manager.MRM_Storage.clear();
     simulate_basic();
     print_clock_cycleinfo(cycleinfoofalln, DRAM_cycle_info);
-    cout << "Program Execution successful" << endl;
+    cout << "Program Execution successful" << endl << endl;
     registerFile.printRegisters();
     return 0;
 }
@@ -398,7 +402,7 @@ void simulate_basic(){
     int cores_executed = 0;
     bool cores_execution_finished[N] = {false};
     while(cores_executed < N){
-        bool alu_this_cycle = false;
+        bool alu_this_cycle[N] = {false};
         //if (clock_cycle > 50) break;
         clock_cycle++;
         bool DRAM_issued = false; //only one DRAM request issued in this cycle
@@ -428,24 +432,26 @@ void simulate_basic(){
                     reg_hold_sw[core][current.attributes[0]]++;
                 }
                 DRAM_issued = true;
-                cout << clock_cycle << "dram issue " << current.line << endl;
+                //cout << clock_cycle << "dram issue " << current.line << endl;
                 this_cycle_info.push_back("DRAM Request Issued for " + current.line);
                 programCounter[core]++;
             }
             else if (current.kind == "j"){
                 processInstruction(core, current);
+                this_cycle_info.push_back("Instruction executed : " + current.line);
             }
             else if (check_dep(core, current) == false){
-                cout << clock_cycle << " dependednt " << current.line << endl;
-                deque<int>::iterator it = find(core_process_next.begin(),core_process_next.end(),core);
+                //cout << clock_cycle << " dependednt " << current.line << endl;
+                vector<int>::iterator it = find(core_process_next.begin(),core_process_next.end(),core);
                 if(it == core_process_next.end()){
+                    //cout << core_process_next.size() << "PUSHED" << core << endl;
                     core_process_next.push_back(core);
                 }
             }
             else{
                 processInstruction(core, current);
-                alu_this_cycle = true;
-                cout << clock_cycle << " ind - dependednt " << current.line << endl;
+                alu_this_cycle[core] = true;
+                //cout << clock_cycle << " ind - dependednt " << current.line << endl;
                 this_cycle_info.push_back("Instruction executed : " + current.line);
             }
             cycleinfoofalln[core].push_back(this_cycle_info);
@@ -454,18 +460,23 @@ void simulate_basic(){
         if (state.second == ""){
             continue;
         }
-        if (state.first == true && alu_this_cycle == true){
-            clock_cycle++; //TO avoid 2 register writes in same cycle
-            insert_empty(-1);
-            cout << "clock --OO " << clock_cycle << state.second << endl;
-            DRAM_cycle_info.push_back(make_pair(clock_cycle, state.second));
+        if (state.first == true){
+            if (alu_this_cycle[stoi(state.second.substr(0, GetIndexofChar(state.second, '.')))] == true){
+                clock_cycle++; //TO avoid 2 register writes in same cycle
+                insert_empty(-1);
+                //cout << "clock --OO " << clock_cycle << state.second << endl;
+                DRAM_cycle_info.push_back(make_pair(clock_cycle, state.second));
+            }else{
+                //cout << "clock -- " << clock_cycle << state.second << endl;
+                DRAM_cycle_info.push_back(make_pair(clock_cycle, state.second));
+            }
         }
         else{
-            cout << "clock -- " << clock_cycle << state.second << endl;
+            //cout << "clock -- " << clock_cycle << state.second << endl;
             DRAM_cycle_info.push_back(make_pair(clock_cycle, state.second));
         }
         Mem_Request_manager.assert_core_executed();
-        if (!core_process_next.empty()) Mem_Request_manager.issue_Request_to_Dram(core_process_next.front());
+        if (!core_process_next.empty()) Mem_Request_manager.issue_Request_to_Dram(core_process_next[0]);
     }
 }
 void processInstruction(int core, Instruction current)

@@ -6,7 +6,7 @@ using namespace std;
 string *InstructionMemory = new string[32000]; //Instructions
 string *MemArray = new string[1048576]; //DRAM
 // string MemArray[100];
-const int N = 2;
+const int N = 3;
 int currInstrId[N] = {0};
 int currVarId[N] = {0};
 const int Partition =  32768; //32 rows to one core 1024 x 32

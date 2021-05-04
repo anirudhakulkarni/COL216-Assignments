@@ -2,7 +2,7 @@
 #include "RegisterFile.h"
 using namespace std;
 
-const int N = 2;
+const int N = 3;
 template <class T>
 string to_string(T t, ios_base &(*f)(ios_base &)) // DONT change its name. will not work.
 {
@@ -85,6 +85,6 @@ void RegisterFile :: printRegisters()
         {
             cout << regNameArray[i] << ": " << to_string<long>(regArray[j][i], hex) << ", ";
         }
-        cout << regNameArray[31] << ": " << to_string<long>(regArray[j][31], hex) << endl;
+        cout << regNameArray[31] << ": " << to_string<long>(regArray[j][31], hex) << endl << endl;
     }
 }
