@@ -151,7 +151,7 @@ public:
             if (col_wait == 0 && row_wait == 0){
                 processInstruction(here.first, current_ins);
                 DramQueue.pop_front();
-                return make_pair(true, "Loading Column " + to_string(mem_add % 1024) + " in Row Buffer\n" + "Core #" + to_string(here.first + 1) + " : Execution of Instruction " + current_ins.line + " finished ");
+                return make_pair(true, to_string(here.first + 1) + ":Execution of Instruction " + current_ins.line + " finished." + "Loading Column " + to_string(mem_add % 1024) + " in Row Buffer\n");
             }
             return make_pair(false, "Loading Column " + to_string(mem_add % 1024) + " in Row Buffer");
         }
@@ -203,6 +203,7 @@ public:
 MRM Mem_Request_manager;
 void simulate_lookahead();
 void simulate_basic();
+int GetIndexofChar(string str, char c);
 template <class T>
 string to_string(T t, ios_base &(*f)(ios_base &));
 bool chk_empty(string instruction);
@@ -374,18 +375,39 @@ void simulate_lookahead(){
         }
     }
 }
+int GetIndexofChar(string str, char c){
+    int a = 0;
+    while (str[a] != c){
+        a++;
+    }
+    return a;
+}
+void insert_empty(int chk){
+    if (chk != -1){
+        vector<string> v;
+        cycleinfoofalln[chk].push_back(v);
+        return;
+    }
+    for (int i = 0; i < N; i++){
+        vector<string> v;
+        cycleinfoofalln[i].push_back(v);
+    }
+}
 void simulate_basic(){
     bool complete = false;
     int cores_executed = 0;
     bool cores_execution_finished[N] = {false};
     while(cores_executed < N){
         bool alu_this_cycle = false;
-        if (clock_cycle > 50) break;
+        //if (clock_cycle > 50) break;
         clock_cycle++;
         bool DRAM_issued = false; //only one DRAM request issued in this cycle
         for (int core = 0; core < N; core++){
             vector<string> this_cycle_info;
-            Instruction current = instructionVector[core][programCounter[core]];
+            string curr = memory.getCurrInstr(programCounter[core], core);
+            Instruction current;
+            current.setInstruction(curr);
+            //Instruction current = instructionVector[core][programCounter[core]];
             if (current.kind == "EOF"){
                 if (cores_execution_finished[core] == false){
                     cores_execution_finished[core] = true;cores_executed++;
@@ -393,7 +415,10 @@ void simulate_basic(){
                 continue;
             }
             if (current.kind == "lw" || current.kind == "sw"){
-                if (DRAM_issued) continue;
+                if (DRAM_issued) {
+                    insert_empty(core);
+                    continue;
+                }
                 current.attributes[1] = current.attributes[1] + registerFile.get_register_data(core, current.attributes[2]);
                 Mem_Request_manager.insert_to_MRM(core, current);
                 if (current.kind == "lw"){
@@ -403,6 +428,7 @@ void simulate_basic(){
                     reg_hold_sw[core][current.attributes[0]]++;
                 }
                 DRAM_issued = true;
+                cout << clock_cycle << "dram issue " << current.line << endl;
                 this_cycle_info.push_back("DRAM Request Issued for " + current.line);
                 programCounter[core]++;
             }
@@ -410,6 +436,7 @@ void simulate_basic(){
                 processInstruction(core, current);
             }
             else if (check_dep(core, current) == false){
+                cout << clock_cycle << " dependednt " << current.line << endl;
                 deque<int>::iterator it = find(core_process_next.begin(),core_process_next.end(),core);
                 if(it == core_process_next.end()){
                     core_process_next.push_back(core);
@@ -418,6 +445,7 @@ void simulate_basic(){
             else{
                 processInstruction(core, current);
                 alu_this_cycle = true;
+                cout << clock_cycle << " ind - dependednt " << current.line << endl;
                 this_cycle_info.push_back("Instruction executed : " + current.line);
             }
             cycleinfoofalln[core].push_back(this_cycle_info);
@@ -428,9 +456,12 @@ void simulate_basic(){
         }
         if (state.first == true && alu_this_cycle == true){
             clock_cycle++; //TO avoid 2 register writes in same cycle
+            insert_empty(-1);
+            cout << "clock --OO " << clock_cycle << state.second << endl;
             DRAM_cycle_info.push_back(make_pair(clock_cycle, state.second));
         }
         else{
+            cout << "clock -- " << clock_cycle << state.second << endl;
             DRAM_cycle_info.push_back(make_pair(clock_cycle, state.second));
         }
         Mem_Request_manager.assert_core_executed();
@@ -544,8 +575,30 @@ queue<pair<int, Instruction>> reorder_function(int core, vector<pair<int, Instru
 }
 void print_clock_cycleinfo(vector<vector<string>> cycleinfoofalln[N], vector<pair<int, string>> &DRAM_cycle_info){
     int clock = 0;
-    while(clock < clock_cycle){
+    while(clock < clock_cycle - 1){
         cout << "Clock cycle " << clock + 1 << endl;
+        int idot = -1;
+        int icol = -1;
+        int curr_core = -1;
+        string extra = "";
+        string core_info = "";
+        if (DRAM_cycle_info.size() > 0){
+            if (DRAM_cycle_info[0].first - 1 == clock){
+                string out = DRAM_cycle_info[0].second;
+                if (out.find(":") != string::npos){
+                    idot = GetIndexofChar(out, '.');
+                    icol = GetIndexofChar(out, ':');
+                    curr_core = stoi(out.substr(0, icol));
+                    core_info = out.substr(icol+1, idot - icol-1);
+                    extra = out.substr(idot+1, out.size() - idot-1);
+                }
+                else{
+                    extra = out;
+                }
+                vector<pair<int, string>> :: iterator it = DRAM_cycle_info.begin();
+                DRAM_cycle_info.erase(it);
+            }
+        }
         for (int i = 0; i < N; i++){
             cout << "Core #" << to_string(i+1) <<":" << endl;
             if (cycleinfoofalln[i].size() > clock){
@@ -553,14 +606,11 @@ void print_clock_cycleinfo(vector<vector<string>> cycleinfoofalln[N], vector<pai
                     cout << x << endl;
                 }
             }
-        }
-        if (DRAM_cycle_info.size() > 0){
-            if (DRAM_cycle_info[0].first == clock){
-                cout << DRAM_cycle_info[0].second << endl;
-                vector<pair<int, string>> :: iterator it = DRAM_cycle_info.begin();
-                DRAM_cycle_info.erase(it);
+            if ( i == curr_core-1){
+                cout << core_info << endl;
             }
         }
+        if (extra != "") cout << extra << endl;
         clock++;
         cout << endl;
     }
