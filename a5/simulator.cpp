@@ -185,13 +185,13 @@ public:
     }
     void assert_core_executed(){
         bool to_remove = true;
-        for (auto x : Dram.DramQueue){
-            if (x.first == core_process_next.front()){
+        for (int i = 0; i < Dram.DramQueue.size(); i++) {
+            if (Dram.DramQueue[i].first == core_process_next[0]){
                 to_remove = false;
             }
         }
         for (auto x : MRM_Storage){
-            if (x.first == core_process_next.front()){
+            if (x.first == core_process_next[0]){
                 to_remove = false;
             }
         }
@@ -213,7 +213,9 @@ int main(int argc, char const *argv[])
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);                
     cout.tie(NULL);
+    cout << endl;
     for(int cor = 1; cor <= N; cor++){
+        cout << endl << "Core #" << cor << endl;
         ifstream infile;
         string test2;
         string file = "./Inputs/t" + to_string(cor) + ".txt"; 
@@ -223,16 +225,17 @@ int main(int argc, char const *argv[])
             if (chk_empty(test2) == true){
                 continue;
             }
-            
+            cout << test2 << endl;
             Instruction currIst;
             currIst.setInstruction(test2);
             instructionVector[cor-1].push_back(currIst);
         }
         Instruction endIst;
         endIst.setInstruction("EOF");
+        cout << "EOF" << endl;
         instructionVector[cor-1].push_back(endIst);
     }
-    cout << "Instructions read successfully" << endl;
+    cout << endl << "Instructions read successfully" << endl;
     for (int core = 0; core < N; core++){
         for (int i = 0; i < instructionVector[core].size(); i++){
             memory.storeInstr(instructionVector[core][i].line, core);
@@ -376,6 +379,7 @@ void simulate_basic(){
     int cores_executed = 0;
     bool cores_execution_finished[N] = {false};
     while(cores_executed < N){
+        bool alu_this_cycle = false;
         if (clock_cycle > 50) break;
         clock_cycle++;
         bool DRAM_issued = false; //only one DRAM request issued in this cycle
@@ -413,6 +417,7 @@ void simulate_basic(){
             }
             else{
                 processInstruction(core, current);
+                alu_this_cycle = true;
                 this_cycle_info.push_back("Instruction executed : " + current.line);
             }
             cycleinfoofalln[core].push_back(this_cycle_info);
@@ -421,7 +426,7 @@ void simulate_basic(){
         if (state.second == ""){
             continue;
         }
-        if (state.first == true){
+        if (state.first == true && alu_this_cycle == true){
             clock_cycle++; //TO avoid 2 register writes in same cycle
             DRAM_cycle_info.push_back(make_pair(clock_cycle, state.second));
         }
