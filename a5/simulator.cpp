@@ -6,20 +6,24 @@
 using namespace std;
 
 vector<string> parseInstr(string instruction);
-const int N = 3; // Number of cores
+int N = 4; // Number of cores
+int M = -1;
+int starve_limit = 10;
+bool look_ahead = false;
 //RegisterFile registerFile[N];
 RegisterFile registerFile;
 MemoryUnit memory;
 int clock_cycle = 0;
-int Partition = 1024 * 32;
-vector<vector<string>> cycleinfoofalln[N];
+const int Partition = 1024 * 16;
+vector<vector<string>> cycleinfoofalln[64];
 vector<pair<int, string>> DRAM_cycle_info;
-void print_clock_cycleinfo(vector<vector<string>> cycleinfoofalln[N], vector<pair<int, string>> &DRAM_cycle_info);
+void print_clock_cycleinfo(vector<vector<string>> cycleinfoofalln[], vector<pair<int, string>> &DRAM_cycle_info);
 int row_access_delay = 10;
 int col_access_delay = 2;
-int programCounter[N] = {0};
-int reg_hold_sw[N][32] = {0};
-int reg_hold_lw[N][32] = {0};
+int programCounter[64] = {0};
+int reg_hold_sw[64][32] = {0};
+int reg_hold_lw[64][32] = {0};
+int executionOfInstructionCount[64][999] = {0};
 vector<int> core_process_next;
 struct Instruction {
     string kind; // add, sub, mul, addi, lw, sw, beq, bne, slt, j, label
@@ -79,9 +83,9 @@ struct Instruction {
         }
     }
 };
-vector<Instruction> instructionVector[N];
+vector<Instruction> instructionVector[64];
 void processInstruction(int core, Instruction current);
-queue<pair<int, Instruction>> reorder_function(int core, vector<pair<int, Instruction>> &MRM_storage);
+queue<Instruction> reorder_function(int core, vector<pair<int, Instruction>> &MRM_storage);
 class DRAM
 {
 public:
@@ -175,36 +179,26 @@ public:
         MRM_Storage.push_back(make_pair(core, instruction));
     }
     void issue_Request_to_Dram(int core){
+        //cout << "HI" << endl;
         if (!Dram.busy_DRAM()){
-            queue<pair<int, Instruction>> toInsert = reorder_function(core, MRM_Storage);
+            queue<Instruction> toInsert = reorder_function(core, MRM_Storage);
             while(!toInsert.empty()){
-                Dram.insertoDRAMqueue(toInsert.front().first, toInsert.front().second);
+                Dram.insertoDRAMqueue(core, toInsert.front());
                 toInsert.pop();
             }
-        }
-    }
-    void assert_core_executed(){
-        bool to_remove = true;
-        if (core_process_next.size() == 0) return;
-        for (int i = 0; i < Dram.DramQueue.size(); i++) {
-            if (Dram.DramQueue[i].first == core_process_next[0]){
-                to_remove = false;
-            }
-        }
-        for (auto x : MRM_Storage){
-            if (x.first == core_process_next[0]){
-                to_remove = false;
-            }
-        }
-        if (to_remove == true){
             vector<int> :: iterator it = core_process_next.begin();
             core_process_next.erase(it);
         }
     }
+    bool check_core_present(int core){
+        for (auto x : MRM_Storage){
+            if (x.first == core) return true;
+        }
+        return false;
+    }
 };
 MRM Mem_Request_manager;
-void simulate_lookahead();
-void simulate_basic();
+void simulate();
 int GetIndexofChar(string str, char c);
 template <class T>
 string to_string(T t, ios_base &(*f)(ios_base &));
@@ -247,10 +241,31 @@ int main(int argc, char const *argv[])
     cout << "Instructions stored successfully" << endl << endl;
     Dram.DramQueue.clear();
     Mem_Request_manager.MRM_Storage.clear();
-    simulate_basic();
+    simulate();
     print_clock_cycleinfo(cycleinfoofalln, DRAM_cycle_info);
+    cout << endl;
     cout << "Program Execution successful" << endl << endl;
-    registerFile.printRegisters();
+    cout << "===========================================================" << endl;
+    cout << "Number of times each instruction was executed: " << endl << endl;
+    for (int iy = 0; iy < N; iy++){
+        cout << "Core #" << iy+1 << ": " << endl;
+        int j = 0;
+        for (int i = 0; i < instructionVector[iy].size(); i++)
+        {
+            if (instructionVector[iy][i].line.find(":") == string::npos && (chk_empty(instructionVector[iy][i].line)==false) && instructionVector[iy][i].line!="EOF")
+            {
+                cout << instructionVector[iy][i].line << endl;
+                cout << executionOfInstructionCount[iy][j] << endl;
+                j++;
+            }
+        }
+        cout << endl;
+    }
+    cout << endl;
+    cout << "===========================================================" << endl;
+    memory.printMemDataContent(N);
+    cout << "===========================================================" << endl;
+    registerFile.printRegisters(N);
     return 0;
 }
 bool chk_empty(string instruction){
@@ -368,17 +383,6 @@ bool check_dep(int core, Instruction current){
     }
     return true;
 }
-void simulate_lookahead(){
-    bool complete = false;
-    bool over = false;
-    while(!over){
-        clock_cycle++;
-        for (int core = 0; core < N; core++){
-            vector<string> this_cycle_info;
-            Instruction current = instructionVector[core][programCounter[core]];
-        }
-    }
-}
 int GetIndexofChar(string str, char c){
     int a = 0;
     while (str[a] != c){
@@ -397,12 +401,12 @@ void insert_empty(int chk){
         cycleinfoofalln[i].push_back(v);
     }
 }
-void simulate_basic(){
+void simulate(){
     bool complete = false;
     int cores_executed = 0;
-    bool cores_execution_finished[N] = {false};
-    while(cores_executed < N){
-        bool alu_this_cycle[N] = {false};
+    bool cores_execution_finished[64] = {false};
+    while(cores_executed < N || (Mem_Request_manager.MRM_Storage.size() > 0) || Dram.busy_DRAM()){
+        bool alu_this_cycle[64] = {false};
         //if (clock_cycle > 50) break;
         clock_cycle++;
         bool DRAM_issued = false; //only one DRAM request issued in this cycle
@@ -414,6 +418,9 @@ void simulate_basic(){
             //Instruction current = instructionVector[core][programCounter[core]];
             if (current.kind == "EOF"){
                 if (cores_execution_finished[core] == false){
+                    if (Mem_Request_manager.check_core_present(core)){
+                        core_process_next.push_back(core);
+                    }
                     cores_execution_finished[core] = true;cores_executed++;
                 }
                 continue;
@@ -424,7 +431,9 @@ void simulate_basic(){
                     continue;
                 }
                 current.attributes[1] = current.attributes[1] + registerFile.get_register_data(core, current.attributes[2]);
-                Mem_Request_manager.insert_to_MRM(core, current);
+                if (look_ahead == true) Mem_Request_manager.MRM_Storage.push_back(make_pair(core, current));// (core, current);
+                else Mem_Request_manager.insert_to_MRM(core, current);
+
                 if (current.kind == "lw"){
                     reg_hold_lw[core][current.attributes[0]]++;
                 }
@@ -434,6 +443,7 @@ void simulate_basic(){
                 DRAM_issued = true;
                 //cout << clock_cycle << "dram issue " << current.line << endl;
                 this_cycle_info.push_back("DRAM Request Issued for " + current.line);
+                executionOfInstructionCount[core][programCounter[core]]++;
                 programCounter[core]++;
             }
             else if (current.kind == "j"){
@@ -456,6 +466,9 @@ void simulate_basic(){
             }
             cycleinfoofalln[core].push_back(this_cycle_info);
         }
+        if (!Dram.busy_DRAM()) {
+            if (!core_process_next.empty()) Mem_Request_manager.issue_Request_to_Dram(core_process_next[0]);
+        }
         pair<int, string> state = Dram.process_DRAM();
         if (state.second == ""){
             continue;
@@ -463,7 +476,7 @@ void simulate_basic(){
         if (state.first == true){
             if (alu_this_cycle[stoi(state.second.substr(0, GetIndexofChar(state.second, '.')))] == true){
                 clock_cycle++; //TO avoid 2 register writes in same cycle
-                insert_empty(-1);
+                insert_empty(stoi(state.second.substr(0, GetIndexofChar(state.second, '.'))));
                 //cout << "clock --OO " << clock_cycle << state.second << endl;
                 DRAM_cycle_info.push_back(make_pair(clock_cycle, state.second));
             }else{
@@ -475,7 +488,6 @@ void simulate_basic(){
             //cout << "clock -- " << clock_cycle << state.second << endl;
             DRAM_cycle_info.push_back(make_pair(clock_cycle, state.second));
         }
-        Mem_Request_manager.assert_core_executed();
         if (!core_process_next.empty()) Mem_Request_manager.issue_Request_to_Dram(core_process_next[0]);
     }
 }
@@ -486,6 +498,7 @@ void processInstruction(int core, Instruction current)
             int ans = registerFile.get_register_data(core, current.attributes[1]) +
                             registerFile.get_register_data(core, current.attributes[2]);
             registerFile.set_register_data(core, current.attributes[0], ans);
+            executionOfInstructionCount[core][programCounter[core]]++;
             programCounter[core]++;
         }
         else if (current.kind == "sub")
@@ -493,6 +506,7 @@ void processInstruction(int core, Instruction current)
             int ans = registerFile.get_register_data(core, current.attributes[1]) -
                             registerFile.get_register_data(core, current.attributes[2]);
             registerFile.set_register_data(core, current.attributes[0], ans);
+            executionOfInstructionCount[core][programCounter[core]]++;
             programCounter[core]++;
         }
         else if (current.kind == "mul")
@@ -500,16 +514,19 @@ void processInstruction(int core, Instruction current)
             int ans = registerFile.get_register_data(core, current.attributes[1]) *
                             registerFile.get_register_data(core, current.attributes[2]);
             registerFile.set_register_data(core, current.attributes[0], ans);
+            executionOfInstructionCount[core][programCounter[core]]++;
             programCounter[core]++;
         }
         else if (current.kind == "beq")
         {
             if (registerFile.get_register_data(core, current.attributes[0]) == registerFile.get_register_data(core, current.attributes[1]))
             {
+                executionOfInstructionCount[core][programCounter[core]]++;
                 programCounter[core] = memory.getAddOfLabel(current.label, core);
             }
             else
             {
+                executionOfInstructionCount[core][programCounter[core]]++;
                 programCounter[core]++;
             }
         }
@@ -517,10 +534,12 @@ void processInstruction(int core, Instruction current)
         {
             if (registerFile.get_register_data(core, current.attributes[0]) != registerFile.get_register_data(core, current.attributes[1]))
             {
+                executionOfInstructionCount[core][programCounter[core]]++;
                 programCounter[core] = memory.getAddOfLabel(current.label, core);
             }
             else
             {
+                executionOfInstructionCount[core][programCounter[core]]++;
                 programCounter[core]++;
             }
         }
@@ -534,16 +553,19 @@ void processInstruction(int core, Instruction current)
             {
                 registerFile.set_register_data(core, current.attributes[0], 0);
             }
+            executionOfInstructionCount[core][programCounter[core]]++;
             programCounter[core]++;
         }
         else if (current.kind == "j")
         {
             if (isdigit(current.label[0]))
             {
+                executionOfInstructionCount[core][programCounter[core]]++;
                 programCounter[core] = stoi(current.label);
             }
             else
             {
+                executionOfInstructionCount[core][programCounter[core]]++;
                 programCounter[core] = memory.getAddOfLabel(current.label, core);
             }
         }
@@ -562,6 +584,7 @@ void processInstruction(int core, Instruction current)
         {
             int ans = registerFile.get_register_data(core, current.attributes[1]) + current.attributes[2];
             registerFile.set_register_data(core, current.attributes[0], ans);
+            executionOfInstructionCount[core][programCounter[core]]++;
             programCounter[core]++;
         }
         else
@@ -570,24 +593,135 @@ void processInstruction(int core, Instruction current)
             throw exception();
         }
 }
-queue<pair<int, Instruction>> reorder_function(int core, vector<pair<int, Instruction>> &MRM_storage){
-    queue<pair<int, Instruction>> output;
-    vector<pair<int, Instruction>> temp;
-    for (auto x : MRM_storage){
-        if (x.first == core){
-            output.push(x);
-        }
-        else{
-            temp.push_back(x);
+void helper(int x, int r[], int m[], queue<Instruction> &ans, vector<bool> &b, vector<Instruction> vec){
+    for(int i = 0; i< vec.size(); i++){
+        if (vec[i].attributes[1] / 1024 == x && (b[i] == false)){
+            if (vec[i].kind == "sw"){
+                if (r[vec[i].attributes[0]] == 0){
+                    ans.push(vec[i]);
+                    b[i] = true;
+                }
+            }
+            else{
+                if (m[vec[i].attributes[0]] == 0){
+                    ans.push(vec[i]);
+                    b[i] = true;
+                }
+            }
         }
     }
-    MRM_storage = temp;
+}
+queue<Instruction> reorder_function(int core, vector<pair<int, Instruction>> &MRM_storage){
+    int register_hold[32] = {0};
+    int memory_hold[Partition] = {0};
+    vector<pair<int, Instruction>> replace;
+    queue<Instruction> ans;
+    map<int, queue<Instruction>> spock;
+    vector<Instruction> main;
+    vector<bool> executed;
+    if(MRM_storage.empty()){
+        return ans;
+    }
+    for (auto ins : MRM_storage){
+        if (ins.first != core) {
+            replace.push_back(ins);
+            continue;
+        }
+        Instruction curr_instr = ins.second;
+        if (curr_instr.kind == "sw"){
+            if (register_hold[curr_instr.attributes[0]] == 0){
+                spock[curr_instr.attributes[1] / 1024].push(curr_instr);
+            }
+            else {
+                main.push_back(curr_instr);
+                executed.push_back(false);
+            }
+            memory_hold[curr_instr.attributes[1]]++;  
+        }
+        else{
+            if (memory_hold[curr_instr.attributes[1]] == 0){
+                spock[curr_instr.attributes[1] / 1024].push(curr_instr);
+            }
+            else {
+                main.push_back(curr_instr);
+                executed.push_back(false);
+            }
+            register_hold[curr_instr.attributes[0]]++;
+        }
+    }
+    
+    if (spock.find(Dram.row_in_rowbuff) != spock.end()){
+        int curr = Dram.row_in_rowbuff;
+        while(!spock[curr].empty()){
+            Instruction ins = spock[curr].front();
+            if (ins.kind == "lw"){
+                register_hold[ins.attributes[0]]--;
+            }else{
+                memory_hold[ins.attributes[1]]--;
+            }
+            ans.push(ins);
+            spock[curr].pop();
+        }
+        helper(curr, register_hold, memory_hold, ans, executed, main);
+    }
+    for (auto it = spock.begin(); it != spock.end(); it++){
+        while(!it->second.empty()){
+            if (it->second.front().kind == "lw"){
+                register_hold[it->second.front().attributes[0]]--;
+            }else{
+                memory_hold[it->second.front().attributes[1]]--;
+            }
+            ans.push(it->second.front());
+            it->second.pop();
+        }
+        helper(it->first, register_hold, memory_hold, ans, executed, main);
+    }
+    int cf = 0;
+    for(bool b : executed){
+        (b == true) ? cf++ : cf+=0;
+    }
+    while (cf < main.size()){
+        cout << cf << " " << main.size() << endl;
+        for (int it = 0; it < main.size(); it++){
+            if (executed[it] == false){
+                if (main[it].kind == "lw"){
+                    if (memory_hold[main[it].attributes[1]] == 0){
+                        ans.push(main[it]);
+                        register_hold[main[it].attributes[0]]--;
+                        executed[it] = true;
+                        cf++;
+                    }
+                }
+                else{
+                    if (register_hold[main[it].attributes[0]] == 0){
+                        ans.push(main[it]);
+                        memory_hold[main[it].attributes[1]]--;
+                        executed[it] = true;
+                        cf++;
+                    }
+                }
+            }
+        }
+    }
+    queue<Instruction> output;
+    for (int io = 0; io < starve_limit; io++){
+        if (ans.empty()) continue;
+        output.push(ans.front());
+        ans.pop();
+    }
+    while(!ans.empty()){
+        replace.push_back(make_pair(core, ans.front()));
+        ans.pop();
+    }
+    MRM_storage = replace;
     return output;
 }
-void print_clock_cycleinfo(vector<vector<string>> cycleinfoofalln[N], vector<pair<int, string>> &DRAM_cycle_info){
+void print_clock_cycleinfo(vector<vector<string>> cycleinfoofalln[], vector<pair<int, string>> &DRAM_cycle_info){
     int clock = 0;
-    while(clock < clock_cycle - 1){
-        cout << "Clock cycle " << clock + 1 << endl;
+    if (M == -1) M = clock_cycle;
+    int total_ins = 0;
+    while (clock < M){
+        std::cout << "Clock cycle " << clock + 1 << endl;
         int idot = -1;
         int icol = -1;
         int curr_core = -1;
@@ -611,18 +745,23 @@ void print_clock_cycleinfo(vector<vector<string>> cycleinfoofalln[N], vector<pai
             }
         }
         for (int i = 0; i < N; i++){
-            cout << "Core #" << to_string(i+1) <<":" << endl;
+            cout << "Core #" << to_string(i+1) <<": " << endl;
             if (cycleinfoofalln[i].size() > clock){
                 for (auto x : cycleinfoofalln[i][clock]){
+                    if (x.substr(0, 4) != "DRAM") total_ins++;
                     cout << x << endl;
                 }
             }
             if ( i == curr_core-1){
-                cout << core_info << endl;
+                total_ins++;
+                cout <<  core_info << endl;
             }
         }
         if (extra != "") cout << extra << endl;
         clock++;
         cout << endl;
     }
+    cout << "Total Instructions executed in " << M << " cycles = " << total_ins << endl;
+    cout << "Average Number of Instructions per cycle (IPC) = " << ((double) total_ins) / ((double) M) << endl;
+    cout << "Throughput Efficiency " << ((double) total_ins) / ((double) M) * 100.0 << " %" << endl << endl;
 }

@@ -2,7 +2,7 @@
 #include "RegisterFile.h"
 using namespace std;
 
-const int N = 3;
+
 template <class T>
 string to_string(T t, ios_base &(*f)(ios_base &)) // DONT change its name. will not work.
 {
@@ -10,7 +10,7 @@ string to_string(T t, ios_base &(*f)(ios_base &)) // DONT change its name. will 
     oss << f << t;
     return oss.str();
 }
-int regArray[N][32];
+int regArray[64][32];
 string regNameArray[32] = {"$zero", "$at", "$v0", "$v1", "$a0", "$a1", "$a2", "$a3", "$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7", "$s0", "$s1", "$s2", "$s3", "$s4", "$s5", "$s6", "$s7", "$t8", "$t9", "$k0", "$k1", "$gp", "$sp", "$fp", "$ra"};    
 int RegisterFile :: get_regno(string reg)
 {
@@ -59,7 +59,7 @@ int RegisterFile :: get_regno(string reg)
 
 RegisterFile :: RegisterFile()
 {
-    for(int i = 0; i < N; i++){
+    for(int i = 0; i < 64; i++){
     for (int it = 0; it < 32; it++) regArray[i][it] = 0;
     }
 }
@@ -77,7 +77,7 @@ void RegisterFile :: set_register_data(int core, int register_num, int data)
     }
     regArray[core][register_num] = data;
 }
-void RegisterFile :: printRegisters()
+void RegisterFile :: printRegisters(int N)
 {
     for(int j = 0; j < N; j++){
         cout << "Core #" << to_string(j+1) << " : Contents of Register file" << "\n";

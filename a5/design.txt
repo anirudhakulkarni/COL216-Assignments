@@ -9,11 +9,9 @@ Each core can access it's memory blocks only and can not access memory blocks of
 #While accessing DRAM these relative addresses are converted into physical/absolute addresses. 
 
 #core-1 : lw $t0, 0($s0) (suppose $s0 = 1000) Assuming core-1 is given memory from address 0 - 8191
-
                 $t0 will read the data from address 1000 (physical address)
 
 #core-2 : lw $t0, 0($s0) (suppose $s0 = 1000) Assuming core-2 is given memory from address 8192 - 16383
-
                $t0 will read the data from address 1000+8192=9192 (physical address)  (1000 refers to relative address)
 
 #Since there are N processors and only 1 DRAM, some "arbitration" is needed to ensure 
@@ -34,3 +32,30 @@ If multiple lw/sw requests are raised in a single clock cycle (by different core
 This question is about the cycle analysis.
 We encourage you to think what can be done in one cycle or what operation
 needs more than one cycle and come up with a feasible and efficient approach. 
+
+
+
+
+Avoid Memory Contention: Memory contention is the situation in which two 
+different programs try to make use of the same memory resources such as 
+disk space, RAM, cache, or processing threads at the same time. This could 
+result in deadlock or thrashing (when the memory is forced to constantly 
+receive and store data in secondary storage blocks called pages).
+
+Memory bus traffic and core interactions should be kept as low as possible 
+by avoiding sharing storage drives and data. Access to shared memory can be
+regulated by queuing and using a good scheduler program.
+
+
+Avoid False Sharing: False sharing occurs when two or more
+ processors in a multi-core system are making use of the same cache
+  line that is not related to their operations concurrently. The cache
+   system could become confused and this might result in invalidating or 
+   rewriting the cached copy of other processors.
+
+Different processors have different ways of dealing with false sharing
+ problems. It can be avoided by carefully aligning data structures to \
+ suit cache line boundaries using a compiler alignment program used for 
+ compiling cache boundary for each processor. Another way of dealing with 
+ false sharing is by grouping frequently used fields of a data to ensure 
+ that they are located in the same cache line and can be easily accessed when needed.

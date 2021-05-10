@@ -3,15 +3,14 @@
 #define fo(i, N) for (int i = 0 ; i < N; i++)
 using namespace std;
 
-string *InstructionMemory = new string[32000]; //Instructions
+string *InstructionMemory = new string[64000]; //Instructions
 string *MemArray = new string[1048576]; //DRAM
 // string MemArray[100];
-const int N = 3;
-int currInstrId[N] = {0};
-int currVarId[N] = {0};
-const int Partition =  32768; //32 rows to one core 1024 x 32
-map<string, int> addofLabels[N];
-map<string, int> addofVars[N];
+int currInstrId[64] = {0};
+int currVarId[64] = {0};
+const int Partition =  16384; //16 rows to one core 1024 x 32
+map<string, int> addofLabels[64];
+map<string, int> addofVars[64];
 int getIndexofChar(string str, char c);
 template <class T>
 string to_string(T t, ios_base &(*f)(ios_base &));
@@ -19,10 +18,10 @@ MemoryUnit :: MemoryUnit()
 {
     for (int it = 0; it < 1048576; it++)
         MemArray[it] = "";
-    fo(i, 1000*32){
+    fo(i, 1000*64){
         InstructionMemory[i] = "";
     }
-    for(int i = 0; i<N; i++) {
+    for(int i = 0; i<64; i++) {
         currInstrId[i] = 1000 * i;
         currVarId[i] = Partition * i;
     }
@@ -97,17 +96,19 @@ int MemoryUnit :: getDataAdd(int address, int core)
     int val; ss >> val;
     return val;
 }
-void MemoryUnit :: printMemDataContent()
+void MemoryUnit :: printMemDataContent(int N)
 
 {
+    cout << "Memory content at the end of the execution" << endl << endl;
     for(int cr = 0; cr < N; cr++){
-        cout << "Memory content at the end of the execution for core " << cr << " is: " << endl;
+        cout << "Core #" << cr+1 << ":" << endl;
         for (int y = Partition * cr; y < (cr+1) * Partition; y+=4)
         {
             if (MemArray[y] == "") continue;
             stringstream ss(MemArray[y]); int val; ss >> val; 
-            cout << y - Partition << '-' << y+3 - Partition <<":" << ' ' << to_string<long>(val, hex) << endl;
+            cout << y % Partition << '-' << (y+3) % Partition <<":" << ' ' << to_string<long>(val, hex) << endl;
         }
+        cout << endl;
     } 
 }
 int getIndexofChar(string str, char c){

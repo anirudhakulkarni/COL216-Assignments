@@ -221,8 +221,8 @@ public:
 class MemoryUnit
 {
 public:
-    string *InstructionMemory = new string[1000*N];
-    string *MemArray = new string[1048576];
+    string *InstructionMemory = new string[32000]; //Instructions
+    string *MemArray = new string[1048576]; //DRAM
     // string MemArray[100];
     int currInstrId[N] = {0};
     int currVarId[N] = {0};
@@ -234,7 +234,7 @@ public:
     {
         for (int it = 0; it < 1048576; it++)
             MemArray[it] = "";
-        fo(i, 1000*N){
+        fo(i, 1000*32){
             InstructionMemory[i] = "";
         }
         for(int i = 0; i<N; i++) {
@@ -756,7 +756,6 @@ bool check_dep(RegisterFile &registerFile, string currInstr){
 }
 void processNextInstruction(int core, string currentInstr, RegisterFile &registerFile, MemoryUnit &memory, RowBuffer &rowbuff)
 {
-    
 
     if (currentInstr != "EOF")
     {
@@ -1074,7 +1073,7 @@ int main(int argc, char const *argv[])
     string test2;
     
     for(int cor = 1; cor <= N; cor++){
-        string file = "../t" + to_string(cor) + ".txt";
+        string file = "../t" + to_string(cor) + ".txt"; 
         infile.open(file, ios::in);
         while (getline(infile, test2))
         {
@@ -1101,6 +1100,7 @@ int main(int argc, char const *argv[])
             memory.storeInstr(temp, core);
         }
     }
+    
     processInstructions(instructionVector, registerFile, memory, rowbuff);
     return 0;
 }

@@ -15,5 +15,5 @@ public:
     int getData(string variable, int core);
     void setDataAdd(int address, int value, int core);
     int getDataAdd(int address, int core);
-    void printMemDataContent();
+    void printMemDataContent(int N);
 };

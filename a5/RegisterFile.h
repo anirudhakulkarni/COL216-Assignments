@@ -9,5 +9,5 @@ public:
     RegisterFile();
     int get_register_data(int core, int register_num);
     void set_register_data(int core, int register_num, int data);
-    void printRegisters();
+    void printRegisters(int N);
 };
