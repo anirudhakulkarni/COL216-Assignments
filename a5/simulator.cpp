@@ -223,12 +223,17 @@ int main(int argc, char const *argv[])
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);                
     cout.tie(NULL);
+    N = stoi(argv[1]);
+    M = stoi(argv[2]);
+    if (N > 64){
+        throw exception();
+    }
     cout << endl;
     for(int cor = 1; cor <= N; cor++){
         cout << endl << "Core #" << cor << endl;
         ifstream infile;
         string test2;
-        string file = "./Inputs/t" + to_string(cor) + ".txt"; 
+        string file = "../Inputs/t" + to_string(cor) + ".txt"; 
         infile.open(file.c_str(), ios::in);
         while (getline(infile, test2))
         {
@@ -422,6 +427,10 @@ void simulate(){
     bool cores_execution_finished[64] = {false};
     while(cores_executed < N || (Mem_Request_manager.MRM_Storage.size() > 0) || Dram.busy_DRAM()){
         bool alu_this_cycle[64] = {false};
+        if (clock_cycle > 100000){
+            cout << "Infinite Loop detected" << endl;
+            throw exception();
+        }
         //if (clock_cycle > 50) break;
         clock_cycle++;
         bool DRAM_issued = false; //only one DRAM request issued in this cycle
