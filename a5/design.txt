@@ -59,3 +59,22 @@ Different processors have different ways of dealing with false sharing
  compiling cache boundary for each processor. Another way of dealing with 
  false sharing is by grouping frequently used fields of a data to ensure 
  that they are located in the same cache line and can be easily accessed when needed.
+
+
+
+
+ In multi-core systems, main memory is a major shared resource among processor cores. Tasks
+running concurrently on different cores contend with each other to access main memory, thereby
+increasing their execution times.
+
+
+https://users.ece.cmu.edu/~omutlu/pub/bounding-and-reducing-memory-delay_jrts16.pdf
+
+Row-hit memory requests have higher priorities than row-conflict requests.
+2. In case of a tie, older requests have higher priorities.
+
+
+If the cores are running different programs, then separate address
+ spaces is a simple way of ensuring security (one program shouldn't 
+ corrupt another program's data). However, some ways to communicate across 
+ cores though safe and controlled mechanisms are indeed needed.

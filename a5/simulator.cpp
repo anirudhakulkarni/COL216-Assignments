@@ -10,7 +10,9 @@ int N = 4; // Number of cores
 int M = -1;
 int starve_limit = 10;
 bool look_ahead = false;
-//RegisterFile registerFile[N];
+int mem_delay = 0;
+// DRAM Request Issue Delay
+
 RegisterFile registerFile;
 MemoryUnit memory;
 int clock_cycle = 0;
@@ -173,10 +175,21 @@ public:
         }
         int current_row = (Partition * core + instruction.attributes[1]) / 1024;
         if (current_row == Dram.row_in_rowbuff){
+            mem_delay ++;
             Dram.insert_front_to_dram(core, instruction);
             return;
         }
-        MRM_Storage.push_back(make_pair(core, instruction));
+        vector <pair<int, Instruction>> :: iterator ptr;
+        bool flag1 = false;
+        for (ptr = MRM_Storage.begin(); ptr != MRM_Storage.end(); ptr++){
+            if ((*ptr).second.attributes[1] % 1024 == instruction.attributes[1] % 1024){
+                MRM_Storage.insert(ptr, make_pair(core, instruction));
+                flag1 = true;
+                break;
+            }
+            mem_delay++;
+        }
+        if (!flag1) MRM_Storage.push_back(make_pair(core, instruction));
     }
     void issue_Request_to_Dram(int core){
         //cout << "HI" << endl;
@@ -262,6 +275,8 @@ int main(int argc, char const *argv[])
         cout << endl;
     }
     cout << endl;
+    cout << "===========================================================" << endl;
+    cout << "Estimated Delay caused due to MRM Operations = " << mem_delay << " clock cycles." << endl;
     cout << "===========================================================" << endl;
     memory.printMemDataContent(N);
     cout << "===========================================================" << endl;
@@ -428,6 +443,7 @@ void simulate(){
             if (current.kind == "lw" || current.kind == "sw"){
                 if (DRAM_issued) {
                     insert_empty(core);
+                    mem_delay ++;
                     continue;
                 }
                 current.attributes[1] = current.attributes[1] + registerFile.get_register_data(core, current.attributes[2]);

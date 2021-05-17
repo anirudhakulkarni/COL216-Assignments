@@ -5,6 +5,6 @@ build:
 	$(CC) RegisterFile.cpp MemoryUnit.cpp simulator.cpp -o sim $(CFLAGS)
 
 run:
-	./sim >output.txt
+	./sim 
 
 all : build run
